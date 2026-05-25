@@ -1,0 +1,21 @@
+app/
+│
+├── componentes/
+│   ├── navbar/
+│   └── footer/
+│
+├── sistema/
+│   ├── login/
+│   ├── menu/
+│   ├── citas/
+│   └── pacientes/
+│
+├── web/
+│   ├── index/
+│   ├── nosotros/
+│   └── servicios/
+│
+├── app.routes.ts
+├── app.html
+└── app.ts
+
