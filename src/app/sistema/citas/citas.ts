@@ -125,7 +125,7 @@ export class Citas {
       fecha: '2026-05-27',
       hora: '15:00',
       estado: 'Pendiente',
-      motivoConsulta: 'qwe',
+      motivoConsulta: 'Consulta oftalmológica general',
       obserrvaciones: 'qweqwe'
     };
 
