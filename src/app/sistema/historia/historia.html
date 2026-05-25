@@ -1,0 +1,353 @@
+<section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10">
+  <div class="mx-auto max-w-7xl">
+
+    <!-- Encabezado -->
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div>
+        <span class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-medium text-sky-700">
+          <i class="bi bi-journal-medical"></i>
+          Historia clínica
+        </span>
+
+        <h1 class="mt-5 text-4xl font-bold text-sky-950">
+          Historias clínicas
+        </h1>
+
+        <p class="mt-3 max-w-2xl text-slate-600">
+          Registra y administra el diagnóstico visual, agudeza visual, tratamiento y receta del paciente.
+        </p>
+      </div>
+
+      <div class="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm">
+        <p class="text-sm text-slate-500">Total de historias</p>
+        <p class="mt-1 text-4xl font-bold text-sky-600">
+          {{ historias.length }}
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+      <!-- Formulario -->
+      <div class="lg:col-span-1">
+        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+              @if (modoEdicion) {
+                <i class="bi bi-pencil-square"></i>
+              } @else {
+                <i class="bi bi-journal-plus"></i>
+              }
+            </div>
+
+            <div>
+              <h2 class="text-xl font-bold text-sky-950">
+                @if (modoEdicion) {
+                  Editar historia
+                } @else {
+                  Nueva historia
+                }
+              </h2>
+
+              <p class="text-sm text-slate-500">
+                Complete los datos clínicos.
+              </p>
+            </div>
+          </div>
+
+          <form class="mt-6 space-y-4" (ngSubmit)="registrarHistoria()">
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Fecha de registro
+              </label>
+
+              <input
+                type="date"
+                name="fechaRegistro"
+                [(ngModel)]="nuevaHistoria.fechaRegistro"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Diagnóstico visual
+              </label>
+
+              <input
+                type="text"
+                name="diagnosticoVisual"
+                [(ngModel)]="nuevaHistoria.diagnosticoVisual"
+                placeholder="Ejemplo: Miopía leve"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Agudeza visual
+              </label>
+
+              <input
+                type="text"
+                name="agudezaVisual"
+                [(ngModel)]="nuevaHistoria.agudezaVisual"
+                placeholder="Ejemplo: OD 20/40 - OI 20/30"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Tratamiento
+              </label>
+
+              <textarea
+                rows="3"
+                name="tratamiento"
+                [(ngModel)]="nuevaHistoria.tratamiento"
+                placeholder="Indique el tratamiento recomendado..."
+                class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Receta
+              </label>
+
+              <textarea
+                rows="3"
+                name="receta"
+                [(ngModel)]="nuevaHistoria.receta"
+                placeholder="Detalle la receta..."
+                class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Observaciones
+              </label>
+
+              <textarea
+                rows="4"
+                name="observaciones"
+                [(ngModel)]="nuevaHistoria.observaciones"
+                placeholder="Observaciones adicionales..."
+                class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              ></textarea>
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="submit"
+                class="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-sky-600"
+              >
+                @if (modoEdicion) {
+                  <i class="bi bi-save"></i>
+                  Guardar cambios
+                } @else {
+                  <i class="bi bi-journal-plus"></i>
+                  Registrar
+                }
+              </button>
+
+              <button
+                type="button"
+                (click)="limpiarFormulario()"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 font-semibold text-sky-700 transition hover:bg-sky-50"
+              >
+                <i class="bi bi-eraser"></i>
+                Limpiar
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- Listado -->
+      <div class="lg:col-span-2">
+        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-sky-950">
+                Historias registradas
+              </h2>
+
+              <p class="text-sm text-slate-500">
+                Lista de historias clínicas disponibles.
+              </p>
+            </div>
+
+            <input
+              type="text"
+              name="busqueda"
+              [(ngModel)]="busqueda"
+              placeholder="Buscar historia..."
+              class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white md:w-72"
+            >
+          </div>
+
+          <div class="mt-6 overflow-x-auto">
+            <table class="w-full min-w-[950px] border-separate border-spacing-y-3">
+              <thead>
+                <tr class="text-left text-sm text-slate-500">
+                  <th class="px-4 py-2">ID</th>
+                  <th class="px-4 py-2">Fecha</th>
+                  <th class="px-4 py-2">Diagnóstico</th>
+                  <th class="px-4 py-2">Agudeza visual</th>
+                  <th class="px-4 py-2">Tratamiento</th>
+                  <th class="px-4 py-2">Acciones</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (historia of historiasFiltradas; track historia.idHistoria) {
+                  <tr class="rounded-2xl bg-sky-50 text-sm text-slate-700">
+                    <td class="rounded-l-2xl px-4 py-4 font-bold text-sky-700">
+                      {{ historia.idHistoria }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      {{ historia.fechaRegistro }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      <p class="font-semibold text-sky-950">
+                        {{ historia.diagnosticoVisual }}
+                      </p>
+
+                      <p class="mt-1 max-w-xs truncate text-xs text-slate-500">
+                        {{ historia.observaciones || 'Sin observaciones' }}
+                      </p>
+                    </td>
+
+                    <td class="px-4 py-4">
+                      {{ historia.agudezaVisual }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      <p class="max-w-xs truncate">
+                        {{ historia.tratamiento }}
+                      </p>
+                    </td>
+
+                    <td class="rounded-r-2xl px-4 py-4">
+                      <div class="flex flex-wrap gap-2">
+
+                        <button
+                          type="button"
+                          (click)="verHistoria(historia)"
+                          class="rounded-full bg-sky-100 px-3 py-2 text-xs font-bold text-sky-700 transition hover:bg-sky-200"
+                        >
+                          Ver
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="editarHistoria(historia)"
+                          class="rounded-full bg-amber-100 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-200"
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="eliminarHistoria(historia.idHistoria)"
+                          class="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-200"
+                        >
+                          Eliminar
+                        </button>
+
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="rounded-2xl bg-sky-50 px-4 py-8 text-center text-slate-500">
+                      No se encontraron historias clínicas.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Detalle -->
+        @if (historiaSeleccionada) {
+          <div class="mt-6 rounded-3xl border border-cyan-100 bg-white p-6 shadow-sm">
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <span class="inline-flex items-center gap-2 rounded-full bg-cyan-100 px-4 py-2 text-sm font-medium text-cyan-700">
+                  <i class="bi bi-clipboard2-pulse"></i>
+                  Detalle clínico
+                </span>
+
+                <h2 class="mt-4 text-2xl font-bold text-sky-950">
+                  Historia #{{ historiaSeleccionada.idHistoria }}
+                </h2>
+
+                <p class="mt-2 text-slate-500">
+                  Información completa de la historia clínica seleccionada.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                (click)="cerrarDetalle()"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-5 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+              >
+                <i class="bi bi-x-lg"></i>
+                Cerrar
+              </button>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="rounded-2xl bg-sky-50 p-4">
+                <p class="text-xs font-semibold uppercase text-slate-500">Fecha de registro</p>
+                <p class="mt-1 font-bold text-sky-950">{{ historiaSeleccionada.fechaRegistro }}</p>
+              </div>
+
+              <div class="rounded-2xl bg-sky-50 p-4">
+                <p class="text-xs font-semibold uppercase text-slate-500">Agudeza visual</p>
+                <p class="mt-1 font-bold text-sky-950">{{ historiaSeleccionada.agudezaVisual }}</p>
+              </div>
+
+              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
+                <p class="text-xs font-semibold uppercase text-slate-500">Diagnóstico visual</p>
+                <p class="mt-1 font-bold text-sky-950">{{ historiaSeleccionada.diagnosticoVisual }}</p>
+              </div>
+
+              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
+                <p class="text-xs font-semibold uppercase text-slate-500">Tratamiento</p>
+                <p class="mt-1 text-sky-950">{{ historiaSeleccionada.tratamiento }}</p>
+              </div>
+
+              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
+                <p class="text-xs font-semibold uppercase text-slate-500">Receta</p>
+                <p class="mt-1 text-sky-950">{{ historiaSeleccionada.receta }}</p>
+              </div>
+
+              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
+                <p class="text-xs font-semibold uppercase text-slate-500">Observaciones</p>
+                <p class="mt-1 text-sky-950">
+                  {{ historiaSeleccionada.observaciones || 'Sin observaciones' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+    </div>
+
+  </div>
+</section>

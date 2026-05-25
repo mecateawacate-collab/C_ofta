@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface Cita {
@@ -57,23 +57,43 @@ export class Citas {
     }
   ];
 
+  @HostListener('document:keydown', ['$event'])
+  detectarTecla(evento: KeyboardEvent): void {
+    const elemento = evento.target as HTMLElement;
+
+    const escribiendo =
+      elemento.tagName === 'INPUT' ||
+      elemento.tagName === 'TEXTAREA' ||
+      elemento.tagName === 'SELECT';
+
+    if (escribiendo) {
+      return;
+    }
+
+    if (evento.key.toLowerCase() === 'ñ') {
+      this.agregarCitaRapida();
+    }
+  }
+
   get citasFiltradas(): Cita[] {
     const texto = this.busqueda.trim().toLowerCase();
 
-    return this.citas.filter((cita) => {
-      const coincideTexto =
-        cita.idCita.toString().includes(texto) ||
-        cita.fecha.toLowerCase().includes(texto) ||
-        cita.hora.toLowerCase().includes(texto) ||
-        cita.estado.toLowerCase().includes(texto) ||
-        cita.motivoConsulta.toLowerCase().includes(texto) ||
-        cita.obserrvaciones.toLowerCase().includes(texto);
+    return this.citas
+      .filter((cita) => {
+        const coincideTexto =
+          cita.idCita.toString().includes(texto) ||
+          cita.fecha.toLowerCase().includes(texto) ||
+          cita.hora.toLowerCase().includes(texto) ||
+          cita.estado.toLowerCase().includes(texto) ||
+          cita.motivoConsulta.toLowerCase().includes(texto) ||
+          cita.obserrvaciones.toLowerCase().includes(texto);
 
-      const coincideEstado =
-        this.filtroEstado === 'Todos' || cita.estado === this.filtroEstado;
+        const coincideEstado =
+          this.filtroEstado === 'Todos' || cita.estado === this.filtroEstado;
 
-      return coincideTexto && coincideEstado;
-    });
+        return coincideTexto && coincideEstado;
+      })
+      .sort((a, b) => b.idCita - a.idCita);
   }
 
   registrarCita(): void {
@@ -97,6 +117,19 @@ export class Citas {
 
     this.citas.unshift(citaGenerada);
     this.limpiarFormulario();
+  }
+
+  agregarCitaRapida(): void {
+    const citaRapida: Cita = {
+      idCita: this.generarId(),
+      fecha: '2026-05-27',
+      hora: '15:00',
+      estado: 'Pendiente',
+      motivoConsulta: 'qwe',
+      obserrvaciones: 'qweqwe'
+    };
+
+    this.citas.unshift(citaRapida);
   }
 
   confirmarCita(cita: Cita): void {

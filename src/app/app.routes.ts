@@ -12,6 +12,7 @@ import { Login } from './sistema/login/login';
 import { Menu } from './sistema/menu/menu';
 import { Pacientes } from './sistema/pacientes/pacientes';
 import { Citas } from './sistema/citas/citas';
+import { Historia } from './sistema/historia/historia';
 
 
 
@@ -28,6 +29,7 @@ export const routes: Routes = [
     {path: 'menu', component: Menu },
     {path: 'pacientes', component: Pacientes },
     {path: 'citas', component: Citas },
+    {path: 'historia', component: Historia },
 
 
     { path: '**', redirectTo: 'index' }

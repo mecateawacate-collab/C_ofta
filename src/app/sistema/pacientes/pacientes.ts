@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface Paciente {
@@ -43,19 +43,39 @@ export class Pacientes {
     }
   ];
 
+  @HostListener('document:keydown', ['$event'])
+  detectarTecla(evento: KeyboardEvent): void {
+    const elemento = evento.target as HTMLElement;
+
+    const escribiendo =
+      elemento.tagName === 'INPUT' ||
+      elemento.tagName === 'TEXTAREA' ||
+      elemento.tagName === 'SELECT';
+
+    if (escribiendo) {
+      return;
+    }
+
+    if (evento.key.toLowerCase() === 'ñ') {
+      this.agregarPacienteRapido();
+    }
+  }
+
   get pacientesFiltrados(): Paciente[] {
     const texto = this.busqueda.trim().toLowerCase();
 
-    return this.pacientes.filter((paciente) => {
-      return (
-        paciente.idPaciente.toString().includes(texto) ||
-        paciente.nombre.toLowerCase().includes(texto) ||
-        paciente.dni.toLowerCase().includes(texto) ||
-        paciente.direccion.toLowerCase().includes(texto) ||
-        paciente.telefono.toLowerCase().includes(texto) ||
-        paciente.fechaNacimiento.toLowerCase().includes(texto)
-      );
-    });
+    return this.pacientes
+      .filter((paciente) => {
+        return (
+          paciente.idPaciente.toString().includes(texto) ||
+          paciente.nombre.toLowerCase().includes(texto) ||
+          paciente.dni.toLowerCase().includes(texto) ||
+          paciente.direccion.toLowerCase().includes(texto) ||
+          paciente.telefono.toLowerCase().includes(texto) ||
+          paciente.fechaNacimiento.toLowerCase().includes(texto)
+        );
+      })
+      .sort((a, b) => b.idPaciente - a.idPaciente);
   }
 
   registrarPaciente(): void {
@@ -71,7 +91,10 @@ export class Pacientes {
     }
 
     const dniExiste = this.pacientes.some((paciente) => {
-      return paciente.dni === this.nuevoPaciente.dni && paciente.idPaciente !== this.nuevoPaciente.idPaciente;
+      return (
+        paciente.dni === this.nuevoPaciente.dni &&
+        paciente.idPaciente !== this.nuevoPaciente.idPaciente
+      );
     });
 
     if (dniExiste) {
@@ -95,6 +118,28 @@ export class Pacientes {
 
     this.pacientes.unshift(pacienteGenerado);
     this.limpiarFormulario();
+  }
+
+  agregarPacienteRapido(): void {
+    const pacienteRapido: Paciente = {
+      idPaciente: this.generarId(),
+      nombre: 'qwe',
+      dni: '12312312',
+      direccion: 'Ayacucho',
+      telefono: '999000999',
+      fechaNacimiento: '2026-05-25'
+    };
+
+    const dniExiste = this.pacientes.some((paciente) => {
+      return paciente.dni === pacienteRapido.dni;
+    });
+
+    if (dniExiste) {
+      alert('Ya existe un paciente registrado con ese DNI.');
+      return;
+    }
+
+    this.pacientes.unshift(pacienteRapido);
   }
 
   editarPaciente(paciente: Paciente): void {

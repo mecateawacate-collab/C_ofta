@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 interface UsuarioSesion {
@@ -32,11 +32,36 @@ export class Menu {
       ruta: '/citas',
       icono: 'bi bi-calendar2-check',
       color: 'from-emerald-500 to-teal-400'
+    },
+    {
+      titulo: 'Historia clínica',
+      descripcion: 'Registrar diagnóstico visual, agudeza, tratamiento y receta.',
+      ruta: '/historia',
+      icono: 'bi bi-journal-medical',
+      color: 'from-indigo-500 to-sky-400'
     }
   ];
 
   constructor(private router: Router) {
     this.cargarSesion();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  detectarTecla(evento: KeyboardEvent): void {
+    const elemento = evento.target as HTMLElement;
+
+    const escribiendo =
+      elemento.tagName === 'INPUT' ||
+      elemento.tagName === 'TEXTAREA' ||
+      elemento.tagName === 'SELECT';
+
+    if (escribiendo) {
+      return;
+    }
+
+    if (evento.key.toLowerCase() === 'ñ') {
+      this.router.navigate(['/historia']);
+    }
   }
 
   cargarSesion(): void {
