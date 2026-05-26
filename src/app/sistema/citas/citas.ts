@@ -239,7 +239,22 @@ export class Citas implements OnInit {
   }
 
   pagarCita(cita: Cita): void {
-    this.cambiarEstado(cita, 'Pagada');
+    if (cita.estado === 'Pendiente') {
+      alert('Primero confirme la cita para generar el pago pendiente.');
+      return;
+    }
+
+    if (cita.estado === 'Cancelada') {
+      alert('No se puede pagar una cita cancelada.');
+      return;
+    }
+
+    if (cita.estado === 'Atendida') {
+      alert('La cita ya fue atendida.');
+      return;
+    }
+
+    window.location.href = `/pagos?idCita=${cita.idCita}`;
   }
 
   cambiarEstado(cita: Cita, estado: EstadoCita): void {

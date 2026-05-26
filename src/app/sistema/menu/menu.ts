@@ -44,8 +44,36 @@ export class Menu {
       color: 'from-emerald-500 to-teal-400'
     },
     {
+      titulo: 'Pagos',
+      descripcion: 'Buscar citas confirmadas y registrar pagos de atención.',
+      ruta: '/pagos',
+      icono: 'bi bi-credit-card',
+      color: 'from-amber-500 to-orange-400'
+    },
+    {
+      titulo: 'Consultas',
+      descripcion: 'Atender citas pagadas y registrar diagnóstico, receta y tratamiento.',
+      ruta: '/consultas',
+      icono: 'bi bi-clipboard2-pulse',
+      color: 'from-rose-500 to-pink-400'
+    },
+    {
+      titulo: 'Exámenes',
+      descripcion: 'Registrar exámenes médicos asociados a una consulta.',
+      ruta: '/examenes',
+      icono: 'bi bi-eye',
+      color: 'from-cyan-500 to-blue-400'
+    },
+    {
+      titulo: 'Reportes',
+      descripcion: 'Generar reportes clínicos completos de pacientes.',
+      ruta: '/reportes',
+      icono: 'bi bi-file-earmark-pdf',
+      color: 'from-red-500 to-orange-400'
+    },
+    {
       titulo: 'Historia clínica',
-      descripcion: 'Registrar diagnóstico visual, agudeza, tratamiento y receta.',
+      descripcion: 'Consultar historias clínicas y revisar la información del paciente.',
       ruta: '/historia',
       icono: 'bi bi-journal-medical',
       color: 'from-indigo-500 to-sky-400'

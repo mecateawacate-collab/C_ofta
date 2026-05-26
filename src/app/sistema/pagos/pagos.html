@@ -1,0 +1,354 @@
+<section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10">
+  <div class="mx-auto max-w-7xl">
+
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div>
+        <span class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-medium text-sky-700">
+          <i class="bi bi-credit-card"></i>
+          Gestión de pagos
+        </span>
+
+        <h1 class="mt-5 text-4xl font-bold text-sky-950">
+          Pagos de citas
+        </h1>
+
+        <p class="mt-3 max-w-2xl text-slate-600">
+          Busca una cita confirmada por su código y confirma el pago fijo de atención.
+        </p>
+      </div>
+
+      <div class="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm">
+        <p class="text-sm text-slate-500">Monto fijo</p>
+        <p class="mt-1 text-4xl font-bold text-sky-600">
+          S/ {{ montoFijo }}
+        </p>
+      </div>
+    </div>
+
+    @if (cargando) {
+      <div class="mt-8 rounded-3xl border border-sky-100 bg-white p-6 text-center text-slate-500 shadow-sm">
+        Cargando pagos...
+      </div>
+    }
+
+    <div class="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div class="rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-500">Pendientes</p>
+            <p class="mt-2 text-3xl font-bold text-amber-600">
+              {{ contarPorEstado('Pendiente') }}
+            </p>
+          </div>
+
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+            <i class="bi bi-hourglass-split text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-500">Pagados</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">
+              {{ contarPorEstado('Pagado') }}
+            </p>
+          </div>
+
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+            <i class="bi bi-check2-circle text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-3xl border border-red-100 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-500">Anulados</p>
+            <p class="mt-2 text-3xl font-bold text-red-600">
+              {{ contarPorEstado('Anulado') }}
+            </p>
+          </div>
+
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+            <i class="bi bi-x-circle text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div class="lg:col-span-1">
+        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+              <i class="bi bi-search"></i>
+            </div>
+
+            <div>
+              <h2 class="text-xl font-bold text-sky-950">
+                Buscar cita
+              </h2>
+              <p class="text-sm text-slate-500">
+                Usa el código entregado al paciente.
+              </p>
+            </div>
+          </div>
+
+          <form class="mt-6 space-y-4" (ngSubmit)="buscarCita()">
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Código de cita
+              </label>
+
+              <input
+                type="text"
+                name="codigoCita"
+                [(ngModel)]="codigoCita"
+                placeholder="Ejemplo: 2"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+            </div>
+
+            <div class="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+              <button
+                type="submit"
+                [disabled]="buscando || procesando"
+                class="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-60"
+              >
+                <i class="bi bi-search"></i>
+                {{ buscando ? 'Buscando...' : 'Buscar' }}
+              </button>
+
+              <button
+                type="button"
+                (click)="limpiarBusqueda()"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 font-semibold text-sky-700 transition hover:bg-sky-50"
+              >
+                <i class="bi bi-eraser"></i>
+                Limpiar
+              </button>
+            </div>
+          </form>
+
+          @if (mensajeError) {
+            <div class="mt-6 rounded-3xl border border-red-100 bg-red-50 p-5 text-red-700">
+              <div class="flex gap-3">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <p class="text-sm font-semibold">{{ mensajeError }}</p>
+              </div>
+            </div>
+          }
+
+          @if (mensajeExito) {
+            <div class="mt-6 rounded-3xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-700">
+              <div class="flex gap-3">
+                <i class="bi bi-check-circle-fill"></i>
+                <p class="text-sm font-semibold">{{ mensajeExito }}</p>
+              </div>
+            </div>
+          }
+
+          @if (citaEncontrada) {
+            <div class="mt-6 rounded-3xl border border-sky-100 bg-sky-50 p-5">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm text-slate-500">Cita encontrada</p>
+                  <h3 class="mt-1 text-2xl font-black text-sky-700">
+                    Código {{ citaEncontrada.idCita }}
+                  </h3>
+                </div>
+
+                <span
+                  class="inline-flex rounded-full border px-3 py-1 text-xs font-bold"
+                  [class]="claseCita(citaEncontrada.estado)"
+                >
+                  {{ citaEncontrada.estado }}
+                </span>
+              </div>
+
+              <div class="mt-5 space-y-2 text-sm text-slate-600">
+                <p><span class="font-bold text-sky-950">Paciente:</span> {{ citaEncontrada.paciente }}</p>
+                <p><span class="font-bold text-sky-950">DNI:</span> {{ citaEncontrada.dni }}</p>
+                <p><span class="font-bold text-sky-950">Fecha:</span> {{ citaEncontrada.fecha }}</p>
+                <p><span class="font-bold text-sky-950">Hora:</span> {{ citaEncontrada.hora }}</p>
+                <p><span class="font-bold text-sky-950">Motivo:</span> {{ citaEncontrada.motivoConsulta }}</p>
+              </div>
+
+              @if (pagoEncontrado) {
+                <div class="mt-5 rounded-2xl border border-white bg-white p-4">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="text-sm text-slate-500">Pago</p>
+                      <p class="text-xl font-black text-sky-700">S/ {{ pagoEncontrado.monto }}</p>
+                    </div>
+
+                    <span
+                      class="inline-flex rounded-full border px-3 py-1 text-xs font-bold"
+                      [class]="clasePago(pagoEncontrado.estado)"
+                    >
+                      {{ pagoEncontrado.estado }}
+                    </span>
+                  </div>
+                </div>
+              }
+
+              @if (puedeConfirmarPago()) {
+                <div class="mt-5">
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">
+                    Comprobante
+                  </label>
+
+                  <input
+                    type="text"
+                    name="comprobante"
+                    [(ngModel)]="comprobante"
+                    placeholder="Boleta, recibo o nota interna"
+                    class="w-full rounded-2xl border border-sky-100 bg-white px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400"
+                  >
+
+                  <button
+                    type="button"
+                    (click)="confirmarPago()"
+                    [disabled]="procesando"
+                    class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-emerald-600 disabled:opacity-60"
+                  >
+                    <i class="bi bi-cash-coin"></i>
+                    {{ procesando ? 'Confirmando...' : 'Confirmar pago de S/ 50' }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-sky-950">
+                Pagos registrados
+              </h2>
+
+              <p class="text-sm text-slate-500">
+                Lista de pagos pendientes, pagados y anulados.
+              </p>
+            </div>
+
+            <div class="flex flex-col gap-3 md:flex-row">
+              <input
+                type="text"
+                name="busqueda"
+                [(ngModel)]="busqueda"
+                placeholder="Buscar pago..."
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white md:w-64"
+              >
+
+              <select
+                name="filtroEstado"
+                [(ngModel)]="filtroEstado"
+                class="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+                <option>Todos</option>
+                <option>Pendiente</option>
+                <option>Pagado</option>
+                <option>Anulado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-6 overflow-x-auto">
+            <table class="w-full min-w-250 border-separate border-spacing-y-3">
+              <thead>
+                <tr class="text-left text-sm text-slate-500">
+                  <th class="px-4 py-2">ID pago</th>
+                  <th class="px-4 py-2">Cita</th>
+                  <th class="px-4 py-2">Paciente</th>
+                  <th class="px-4 py-2">Monto</th>
+                  <th class="px-4 py-2">Fecha pago</th>
+                  <th class="px-4 py-2">Estado</th>
+                  <th class="px-4 py-2">Comprobante</th>
+                  <th class="px-4 py-2">Acciones</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (pago of pagosFiltrados; track pago.idPago) {
+                  <tr class="rounded-2xl bg-sky-50 text-sm text-slate-700">
+                    <td class="rounded-l-2xl px-4 py-4 font-bold text-sky-700">
+                      {{ pago.idPago }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      <p class="font-bold text-sky-950">{{ pago.idCita }}</p>
+                      <p class="mt-1 text-xs text-slate-500">{{ pago.fechaCita }} {{ pago.horaCita }}</p>
+                    </td>
+
+                    <td class="px-4 py-4">
+                      <p class="font-semibold text-sky-950">{{ pago.paciente }}</p>
+                      <p class="mt-1 text-xs text-slate-500">DNI {{ pago.dni }}</p>
+                    </td>
+
+                    <td class="px-4 py-4 font-bold text-sky-700">
+                      S/ {{ pago.monto }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      {{ pago.fechaPago || 'Pendiente' }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      <span
+                        class="inline-flex rounded-full border px-3 py-1 text-xs font-bold"
+                        [class]="clasePago(pago.estado)"
+                      >
+                        {{ pago.estado }}
+                      </span>
+                    </td>
+
+                    <td class="px-4 py-4">
+                      {{ pago.comprobante || 'Sin comprobante' }}
+                    </td>
+
+                    <td class="rounded-r-2xl px-4 py-4">
+                      <div class="flex flex-wrap gap-2">
+                        @if (pago.estado === 'Pendiente') {
+                          <button
+                            type="button"
+                            (click)="codigoCita = '' + pago.idCita; buscarCita()"
+                            class="rounded-full bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200"
+                          >
+                            Pagar
+                          </button>
+                        }
+
+                        @if (pago.estado === 'Pagado') {
+                          <button
+                            type="button"
+                            (click)="anularPago(pago)"
+                            class="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-200"
+                          >
+                            Anular
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="rounded-2xl bg-sky-50 px-4 py-8 text-center text-slate-500">
+                      No se encontraron pagos.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>

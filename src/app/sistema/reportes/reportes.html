@@ -1,0 +1,226 @@
+<section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10">
+  <div class="mx-auto max-w-7xl">
+
+    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div>
+        <span class="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-sm font-medium text-red-700">
+          <i class="bi bi-file-earmark-pdf"></i>
+          Reportes clínicos
+        </span>
+
+        <h1 class="mt-5 text-4xl font-bold text-sky-950">
+          Reporte completo del paciente
+        </h1>
+
+        <p class="mt-3 max-w-2xl text-slate-600">
+          Busca un paciente por ID, DNI o nombre para generar un PDF simple con su historia, citas, pagos, consultas y exámenes.
+        </p>
+      </div>
+
+      <div class="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm">
+        <p class="text-sm text-slate-500">Estado del reporte</p>
+        <p class="mt-1 text-2xl font-bold text-sky-600">
+          {{ hayDatos ? 'Listo' : 'Pendiente' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div class="lg:col-span-1">
+        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+              <i class="bi bi-search"></i>
+            </div>
+
+            <div>
+              <h2 class="text-xl font-bold text-sky-950">
+                Buscar paciente
+              </h2>
+              <p class="text-sm text-slate-500">
+                Ingresa ID, DNI o nombre.
+              </p>
+            </div>
+          </div>
+
+          <form class="mt-6 space-y-4" (ngSubmit)="buscarPaciente()">
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Paciente
+              </label>
+
+              <input
+                type="text"
+                name="busqueda"
+                [(ngModel)]="busqueda"
+                placeholder="Ejemplo: 1, 10203040 o yemm"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+            </div>
+
+            @if (mensajeError) {
+              <div class="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-semibold text-red-700">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {{ mensajeError }}
+              </div>
+            }
+
+            @if (mensajeExito) {
+              <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+                <i class="bi bi-check-circle-fill"></i>
+                {{ mensajeExito }}
+              </div>
+            }
+
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="submit"
+                [disabled]="cargando"
+                class="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-60"
+              >
+                @if (cargando) {
+                  <i class="bi bi-arrow-repeat animate-spin"></i>
+                  Buscando...
+                } @else {
+                  <i class="bi bi-search"></i>
+                  Buscar
+                }
+              </button>
+
+              <button
+                type="button"
+                (click)="limpiarBusqueda()"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 font-semibold text-sky-700 transition hover:bg-sky-50"
+              >
+                <i class="bi bi-eraser"></i>
+                Limpiar
+              </button>
+            </div>
+
+            <button
+              type="button"
+              (click)="generarPdf()"
+              [disabled]="!hayDatos || generando"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              @if (generando) {
+                <i class="bi bi-arrow-repeat animate-spin"></i>
+                Generando PDF...
+              } @else {
+                <i class="bi bi-file-earmark-pdf"></i>
+                Descargar PDF
+              }
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        @if (datos?.paciente) {
+          <div class="space-y-6">
+            <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+              <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-500">
+                    Paciente seleccionado
+                  </p>
+                  <h2 class="mt-2 text-3xl font-bold text-sky-950">
+                    {{ datos?.paciente?.nombre }}
+                  </h2>
+                  <p class="mt-1 text-sm text-slate-500">
+                    DNI {{ datos?.paciente?.dni }} · ID {{ datos?.paciente?.idPaciente }}
+                  </p>
+                </div>
+
+                <div class="rounded-3xl bg-sky-50 p-5 text-sm text-slate-600">
+                  <p><span class="font-bold text-sky-950">Teléfono:</span> {{ datos?.paciente?.telefono }}</p>
+                  <p class="mt-1"><span class="font-bold text-sky-950">Dirección:</span> {{ datos?.paciente?.direccion }}</p>
+                  <p class="mt-1"><span class="font-bold text-sky-950">Nacimiento:</span> {{ datos?.paciente?.fechaNacimiento }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-5">
+              <div class="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
+                <p class="text-sm text-slate-500">Historias</p>
+                <p class="mt-2 text-3xl font-bold text-indigo-600">{{ datos?.historias?.length || 0 }}</p>
+              </div>
+
+              <div class="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm">
+                <p class="text-sm text-slate-500">Citas</p>
+                <p class="mt-2 text-3xl font-bold text-emerald-600">{{ datos?.citas?.length || 0 }}</p>
+              </div>
+
+              <div class="rounded-3xl border border-amber-100 bg-white p-5 shadow-sm">
+                <p class="text-sm text-slate-500">Pagos</p>
+                <p class="mt-2 text-3xl font-bold text-amber-600">{{ datos?.pagos?.length || 0 }}</p>
+              </div>
+
+              <div class="rounded-3xl border border-rose-100 bg-white p-5 shadow-sm">
+                <p class="text-sm text-slate-500">Consultas</p>
+                <p class="mt-2 text-3xl font-bold text-rose-600">{{ datos?.consultas?.length || 0 }}</p>
+              </div>
+
+              <div class="rounded-3xl border border-cyan-100 bg-white p-5 shadow-sm">
+                <p class="text-sm text-slate-500">Exámenes</p>
+                <p class="mt-2 text-3xl font-bold text-cyan-600">{{ datos?.examenes?.length || 0 }}</p>
+              </div>
+            </div>
+
+            <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+              <h2 class="text-xl font-bold text-sky-950">
+                Resumen clínico
+              </h2>
+
+              <div class="mt-6 space-y-5">
+                <div>
+                  <h3 class="font-bold text-sky-700">Últimas consultas</h3>
+                  <div class="mt-3 space-y-3">
+                    @for (consulta of datos?.consultas || []; track consulta.idConsulta) {
+                      <div class="rounded-2xl bg-rose-50 p-4 text-sm text-slate-700">
+                        <p class="font-bold text-sky-950">Consulta {{ consulta.idConsulta }} · {{ consulta.fechaConsulta }}</p>
+                        <p class="mt-1"><span class="font-semibold">Diagnóstico:</span> {{ consulta.diagnosticoVisual }}</p>
+                        <p class="mt-1"><span class="font-semibold">Tratamiento:</span> {{ consulta.tratamiento }}</p>
+                      </div>
+                    } @empty {
+                      <p class="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">Sin consultas registradas.</p>
+                    }
+                  </div>
+                </div>
+
+                <div>
+                  <h3 class="font-bold text-sky-700">Exámenes registrados</h3>
+                  <div class="mt-3 space-y-3">
+                    @for (examen of datos?.examenes || []; track examen.idExamen) {
+                      <div class="rounded-2xl bg-cyan-50 p-4 text-sm text-slate-700">
+                        <p class="font-bold text-sky-950">{{ examen.tipoExamen }} · {{ examen.fecha }}</p>
+                        <p class="mt-1"><span class="font-semibold">Resultado:</span> {{ examen.resultado }}</p>
+                      </div>
+                    } @empty {
+                      <p class="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">Sin exámenes registrados.</p>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="rounded-3xl border border-sky-100 bg-white p-10 text-center shadow-sm">
+            <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-sky-100 text-sky-600">
+              <i class="bi bi-file-earmark-medical text-4xl"></i>
+            </div>
+
+            <h2 class="mt-6 text-2xl font-bold text-sky-950">
+              Busca un paciente para generar su reporte
+            </h2>
+
+            <p class="mx-auto mt-3 max-w-xl text-slate-500">
+              El reporte reunirá la información principal del paciente, su historia clínica, citas, pagos, consultas y exámenes registrados.
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</section>
