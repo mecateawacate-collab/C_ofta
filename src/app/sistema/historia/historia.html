@@ -1,353 +1,404 @@
-<section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10">
+<section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10 text-slate-800">
+
   <div class="mx-auto max-w-7xl">
 
-    <!-- Encabezado -->
-    <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+    <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <span class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-medium text-sky-700">
+        <span class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-semibold text-sky-700">
           <i class="bi bi-journal-medical"></i>
-          Historia clínica
+          Módulo clínico
         </span>
 
-        <h1 class="mt-5 text-4xl font-bold text-sky-950">
+        <h1 class="mt-4 text-3xl font-bold text-sky-950 md:text-4xl">
           Historias clínicas
         </h1>
 
-        <p class="mt-3 max-w-2xl text-slate-600">
-          Registra y administra el diagnóstico visual, agudeza visual, tratamiento y receta del paciente.
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          Crea historias clínicas para pacientes registrados y consulta el historial de citas por paciente.
         </p>
       </div>
 
-      <div class="rounded-3xl border border-sky-100 bg-white p-5 shadow-sm">
-        <p class="text-sm text-slate-500">Total de historias</p>
-        <p class="mt-1 text-4xl font-bold text-sky-600">
-          {{ historias.length }}
-        </p>
-      </div>
+      <button
+        type="button"
+        (click)="cargarDatos()"
+        [disabled]="cargando"
+        class="inline-flex items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <i class="bi bi-arrow-clockwise"></i>
+        Actualizar
+      </button>
     </div>
 
-    <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
+    @if (mensajeOk) {
+      <div class="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
+        <i class="bi bi-check-circle mr-1"></i>
+        {{ mensajeOk }}
+      </div>
+    }
 
-      <!-- Formulario -->
-      <div class="lg:col-span-1">
+    @if (mensajeError) {
+      <div class="mb-6 rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
+        <i class="bi bi-exclamation-circle mr-1"></i>
+        {{ mensajeError }}
+      </div>
+    }
+
+    @if (cargando) {
+      <div class="rounded-3xl border border-sky-100 bg-white p-8 text-center text-sky-700 shadow-sm">
+        <i class="bi bi-arrow-repeat text-3xl"></i>
+        <p class="mt-3 font-semibold">
+          Cargando historias clínicas...
+        </p>
+      </div>
+    } @else {
+
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+
         <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
-
-          <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-              @if (modoEdicion) {
-                <i class="bi bi-pencil-square"></i>
-              } @else {
-                <i class="bi bi-journal-plus"></i>
-              }
-            </div>
-
+          <div class="mb-5 flex items-start justify-between gap-4">
             <div>
               <h2 class="text-xl font-bold text-sky-950">
-                @if (modoEdicion) {
-                  Editar historia
-                } @else {
-                  Nueva historia
-                }
+                Pacientes sin historia
               </h2>
 
-              <p class="text-sm text-slate-500">
-                Complete los datos clínicos.
+              <p class="mt-1 text-sm text-slate-500">
+                Solo aparecen pacientes que todavía no tienen historia clínica.
               </p>
             </div>
+
+            <span class="rounded-full bg-sky-100 px-3 py-1 text-sm font-bold text-sky-700">
+              {{ pacientesSinHistoria.length }}
+            </span>
           </div>
 
-          <form class="mt-6 space-y-4" (ngSubmit)="registrarHistoria()">
-
-            <div>
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Fecha de registro
-              </label>
-
-              <input
-                type="date"
-                name="fechaRegistro"
-                [(ngModel)]="nuevaHistoria.fechaRegistro"
-                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
-              >
-            </div>
-
-            <div>
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Diagnóstico visual
-              </label>
-
-              <input
-                type="text"
-                name="diagnosticoVisual"
-                [(ngModel)]="nuevaHistoria.diagnosticoVisual"
-                placeholder="Ejemplo: Miopía leve"
-                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
-              >
-            </div>
-
-            <div>
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Agudeza visual
-              </label>
-
-              <input
-                type="text"
-                name="agudezaVisual"
-                [(ngModel)]="nuevaHistoria.agudezaVisual"
-                placeholder="Ejemplo: OD 20/40 - OI 20/30"
-                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
-              >
-            </div>
-
-            <div>
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Tratamiento
-              </label>
-
-              <textarea
-                rows="3"
-                name="tratamiento"
-                [(ngModel)]="nuevaHistoria.tratamiento"
-                placeholder="Indique el tratamiento recomendado..."
-                class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Receta
-              </label>
-
-              <textarea
-                rows="3"
-                name="receta"
-                [(ngModel)]="nuevaHistoria.receta"
-                placeholder="Detalle la receta..."
-                class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Observaciones
-              </label>
-
-              <textarea
-                rows="4"
-                name="observaciones"
-                [(ngModel)]="nuevaHistoria.observaciones"
-                placeholder="Observaciones adicionales..."
-                class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
-              ></textarea>
-            </div>
-
-            <div class="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="submit"
-                class="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-sky-600"
-              >
-                @if (modoEdicion) {
-                  <i class="bi bi-save"></i>
-                  Guardar cambios
-                } @else {
-                  <i class="bi bi-journal-plus"></i>
-                  Registrar
-                }
-              </button>
-
-              <button
-                type="button"
-                (click)="limpiarFormulario()"
-                class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 font-semibold text-sky-700 transition hover:bg-sky-50"
-              >
-                <i class="bi bi-eraser"></i>
-                Limpiar
-              </button>
-            </div>
-
-          </form>
-        </div>
-      </div>
-
-      <!-- Listado -->
-      <div class="lg:col-span-2">
-        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
-
-          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 class="text-xl font-bold text-sky-950">
-                Historias registradas
-              </h2>
-
-              <p class="text-sm text-slate-500">
-                Lista de historias clínicas disponibles.
+          @if (pacientesSinHistoria.length === 0) {
+            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center text-sm text-slate-500">
+              <i class="bi bi-check2-circle text-2xl text-emerald-500"></i>
+              <p class="mt-2">
+                Todos los pacientes registrados ya tienen historia clínica.
               </p>
             </div>
+          } @else {
+            <div class="space-y-3">
+              @for (paciente of pacientesSinHistoria; track paciente.idPaciente) {
+                <div class="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
+                  <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="font-bold text-sky-950">
+                          {{ paciente.nombre }}
+                        </h3>
+
+                        <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-sky-700">
+                          ID: {{ paciente.idPaciente }}
+                        </span>
+                      </div>
+
+                      <div class="mt-2 grid gap-1 text-sm text-slate-600">
+                        <span>
+                          <i class="bi bi-card-text mr-1 text-sky-500"></i>
+                          DNI: {{ paciente.dni }}
+                        </span>
+
+                        <span>
+                          <i class="bi bi-telephone mr-1 text-sky-500"></i>
+                          Teléfono: {{ paciente.telefono || 'Sin teléfono' }}
+                        </span>
+
+                        <span>
+                          <i class="bi bi-geo-alt mr-1 text-sky-500"></i>
+                          Dirección: {{ paciente.direccion || 'Sin dirección' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      (click)="crearHistoria(paciente)"
+                      [disabled]="guardando"
+                      class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <i class="bi bi-plus-circle"></i>
+                      Crear historia
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+          <div class="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-sky-950">
+                Historias creadas
+              </h2>
+
+              <p class="mt-1 text-sm text-slate-500">
+                Pacientes que ya tienen historia clínica registrada.
+              </p>
+            </div>
+
+            <span class="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700">
+              {{ historias.length }}
+            </span>
+          </div>
+
+          @if (historias.length === 0) {
+            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center text-sm text-slate-500">
+              <i class="bi bi-folder-x text-2xl"></i>
+              <p class="mt-2">
+                Todavía no hay historias clínicas registradas.
+              </p>
+            </div>
+          } @else {
+            <div class="overflow-hidden rounded-2xl border border-slate-100">
+              <div class="max-h-130 overflow-auto">
+                <table class="w-full min-w-170 text-left text-sm">
+                  <thead class="sticky top-0 bg-sky-50 text-sky-900">
+                    <tr>
+                      <th class="px-4 py-3 font-bold">Historia</th>
+                      <th class="px-4 py-3 font-bold">Paciente</th>
+                      <th class="px-4 py-3 font-bold">DNI</th>
+                      <th class="px-4 py-3 font-bold">Fecha apertura</th>
+                      <th class="px-4 py-3 font-bold">Teléfono</th>
+                    </tr>
+                  </thead>
+
+                  <tbody class="divide-y divide-slate-100">
+                    @for (historia of historias; track historia.idHistoria) {
+                      <tr class="transition hover:bg-sky-50/60">
+                        <td class="px-4 py-3 font-bold text-sky-700">
+                          #{{ historia.idHistoria }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                          {{ historia.pacienteNombre || 'Sin nombre' }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                          {{ historia.pacienteDni || '-' }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                          {{ historia.fechaApertura || '-' }}
+                        </td>
+
+                        <td class="px-4 py-3">
+                          {{ historia.pacienteTelefono || '-' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <div class="mt-8 rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
+        <div class="mb-5">
+          <h2 class="text-xl font-bold text-sky-950">
+            Buscar historial del paciente
+          </h2>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Busca por ID, nombre o DNI. Al encontrar coincidencias, se muestran sus datos, su historia clínica y sus citas.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-3 md:flex-row">
+          <div class="relative flex-1">
+            <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-sky-500"></i>
 
             <input
               type="text"
-              name="busqueda"
-              [(ngModel)]="busqueda"
-              placeholder="Buscar historia..."
-              class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white md:w-72"
+              name="textoBusqueda"
+              [(ngModel)]="textoBusqueda"
+              (keyup.enter)="buscarHistorial()"
+              placeholder="Buscar por ID, nombre o DNI..."
+              class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 pl-11 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
             >
           </div>
 
-          <div class="mt-6 overflow-x-auto">
-            <table class="w-full min-w-[950px] border-separate border-spacing-y-3">
-              <thead>
-                <tr class="text-left text-sm text-slate-500">
-                  <th class="px-4 py-2">ID</th>
-                  <th class="px-4 py-2">Fecha</th>
-                  <th class="px-4 py-2">Diagnóstico</th>
-                  <th class="px-4 py-2">Agudeza visual</th>
-                  <th class="px-4 py-2">Tratamiento</th>
-                  <th class="px-4 py-2">Acciones</th>
-                </tr>
-              </thead>
+          <button
+            type="button"
+            (click)="buscarHistorial()"
+            [disabled]="buscando"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <i class="bi bi-search"></i>
+            Buscar
+          </button>
 
-              <tbody>
-                @for (historia of historiasFiltradas; track historia.idHistoria) {
-                  <tr class="rounded-2xl bg-sky-50 text-sm text-slate-700">
-                    <td class="rounded-l-2xl px-4 py-4 font-bold text-sky-700">
-                      {{ historia.idHistoria }}
-                    </td>
-
-                    <td class="px-4 py-4">
-                      {{ historia.fechaRegistro }}
-                    </td>
-
-                    <td class="px-4 py-4">
-                      <p class="font-semibold text-sky-950">
-                        {{ historia.diagnosticoVisual }}
-                      </p>
-
-                      <p class="mt-1 max-w-xs truncate text-xs text-slate-500">
-                        {{ historia.observaciones || 'Sin observaciones' }}
-                      </p>
-                    </td>
-
-                    <td class="px-4 py-4">
-                      {{ historia.agudezaVisual }}
-                    </td>
-
-                    <td class="px-4 py-4">
-                      <p class="max-w-xs truncate">
-                        {{ historia.tratamiento }}
-                      </p>
-                    </td>
-
-                    <td class="rounded-r-2xl px-4 py-4">
-                      <div class="flex flex-wrap gap-2">
-
-                        <button
-                          type="button"
-                          (click)="verHistoria(historia)"
-                          class="rounded-full bg-sky-100 px-3 py-2 text-xs font-bold text-sky-700 transition hover:bg-sky-200"
-                        >
-                          Ver
-                        </button>
-
-                        <button
-                          type="button"
-                          (click)="editarHistoria(historia)"
-                          class="rounded-full bg-amber-100 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-200"
-                        >
-                          Editar
-                        </button>
-
-                        <button
-                          type="button"
-                          (click)="eliminarHistoria(historia.idHistoria)"
-                          class="rounded-full bg-red-100 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-200"
-                        >
-                          Eliminar
-                        </button>
-
-                      </div>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="6" class="rounded-2xl bg-sky-50 px-4 py-8 text-center text-slate-500">
-                      No se encontraron historias clínicas.
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
+          <button
+            type="button"
+            (click)="limpiarBusqueda()"
+            class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
         </div>
 
-        <!-- Detalle -->
-        @if (historiaSeleccionada) {
-          <div class="mt-6 rounded-3xl border border-cyan-100 bg-white p-6 shadow-sm">
-            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <span class="inline-flex items-center gap-2 rounded-full bg-cyan-100 px-4 py-2 text-sm font-medium text-cyan-700">
-                  <i class="bi bi-clipboard2-pulse"></i>
-                  Detalle clínico
-                </span>
+        <div class="mt-6 space-y-5">
 
-                <h2 class="mt-4 text-2xl font-bold text-sky-950">
-                  Historia #{{ historiaSeleccionada.idHistoria }}
-                </h2>
+          @if (buscando) {
+            <div class="rounded-2xl border border-sky-100 bg-sky-50 p-5 text-center text-sm font-semibold text-sky-700">
+              <i class="bi bi-arrow-repeat mr-1"></i>
+              Buscando historial...
+            </div>
+          } @else {
 
-                <p class="mt-2 text-slate-500">
-                  Información completa de la historia clínica seleccionada.
+            @if (pacientesHistorial.length === 0) {
+              <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center text-sm text-slate-500">
+                <i class="bi bi-person-x text-2xl"></i>
+                <p class="mt-2">
+                  No se encontraron pacientes.
                 </p>
               </div>
+            } @else {
 
-              <button
-                type="button"
-                (click)="cerrarDetalle()"
-                class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-5 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
-              >
-                <i class="bi bi-x-lg"></i>
-                Cerrar
-              </button>
-            </div>
+              @for (paciente of pacientesHistorial; track paciente.idPaciente) {
+                <div class="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
 
-            <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div class="rounded-2xl bg-sky-50 p-4">
-                <p class="text-xs font-semibold uppercase text-slate-500">Fecha de registro</p>
-                <p class="mt-1 font-bold text-sky-950">{{ historiaSeleccionada.fechaRegistro }}</p>
-              </div>
+                  <div class="border-b border-slate-100 bg-sky-50/70 p-5">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                          <h3 class="text-lg font-bold text-sky-950">
+                            {{ paciente.nombre }}
+                          </h3>
 
-              <div class="rounded-2xl bg-sky-50 p-4">
-                <p class="text-xs font-semibold uppercase text-slate-500">Agudeza visual</p>
-                <p class="mt-1 font-bold text-sky-950">{{ historiaSeleccionada.agudezaVisual }}</p>
-              </div>
+                          <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-sky-700">
+                            ID Paciente: {{ paciente.idPaciente }}
+                          </span>
 
-              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
-                <p class="text-xs font-semibold uppercase text-slate-500">Diagnóstico visual</p>
-                <p class="mt-1 font-bold text-sky-950">{{ historiaSeleccionada.diagnosticoVisual }}</p>
-              </div>
+                          @if (paciente.tieneHistoria) {
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                              Historia #{{ paciente.idHistoria }}
+                            </span>
+                          } @else {
+                            <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+                              Sin historia
+                            </span>
+                          }
+                        </div>
 
-              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
-                <p class="text-xs font-semibold uppercase text-slate-500">Tratamiento</p>
-                <p class="mt-1 text-sky-950">{{ historiaSeleccionada.tratamiento }}</p>
-              </div>
+                        <div class="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
+                          <span>
+                            <i class="bi bi-card-text mr-1 text-sky-500"></i>
+                            DNI: {{ paciente.dni || '-' }}
+                          </span>
 
-              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
-                <p class="text-xs font-semibold uppercase text-slate-500">Receta</p>
-                <p class="mt-1 text-sky-950">{{ historiaSeleccionada.receta }}</p>
-              </div>
+                          <span>
+                            <i class="bi bi-telephone mr-1 text-sky-500"></i>
+                            Teléfono: {{ paciente.telefono || '-' }}
+                          </span>
 
-              <div class="rounded-2xl bg-sky-50 p-4 md:col-span-2">
-                <p class="text-xs font-semibold uppercase text-slate-500">Observaciones</p>
-                <p class="mt-1 text-sky-950">
-                  {{ historiaSeleccionada.observaciones || 'Sin observaciones' }}
-                </p>
-              </div>
-            </div>
-          </div>
-        }
+                          <span>
+                            <i class="bi bi-geo-alt mr-1 text-sky-500"></i>
+                            Dirección: {{ paciente.direccion || '-' }}
+                          </span>
 
+                          <span>
+                            <i class="bi bi-calendar-heart mr-1 text-sky-500"></i>
+                            Apertura historia: {{ paciente.fechaApertura || 'No registrada' }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="rounded-2xl bg-white px-4 py-3 text-center">
+                        <div class="text-2xl font-bold text-sky-700">
+                          {{ totalCitasPaciente(paciente) }}
+                        </div>
+                        <div class="text-xs font-semibold text-slate-500">
+                          citas registradas
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="p-5">
+                    <h4 class="mb-4 font-bold text-sky-950">
+                      Historial de citas
+                    </h4>
+
+                    @if (paciente.citas.length === 0) {
+                      <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+                        Este paciente todavía no tiene citas registradas.
+                      </div>
+                    } @else {
+                      <div class="overflow-hidden rounded-2xl border border-slate-100">
+                        <div class="overflow-auto">
+                          <table class="w-full min-w-212.5 text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-700">
+                              <tr>
+                                <th class="px-4 py-3 font-bold">Cita</th>
+                                <th class="px-4 py-3 font-bold">Fecha</th>
+                                <th class="px-4 py-3 font-bold">Hora</th>
+                                <th class="px-4 py-3 font-bold">Médico</th>
+                                <th class="px-4 py-3 font-bold">Estado</th>
+                                <th class="px-4 py-3 font-bold">Motivo</th>
+                                <th class="px-4 py-3 font-bold">Observaciones</th>
+                              </tr>
+                            </thead>
+
+                            <tbody class="divide-y divide-slate-100">
+                              @for (cita of paciente.citas; track cita.idCita) {
+                                <tr class="transition hover:bg-sky-50/60">
+                                  <td class="px-4 py-3 font-bold text-sky-700">
+                                    #{{ cita.idCita }}
+                                  </td>
+
+                                  <td class="px-4 py-3">
+                                    {{ cita.fecha || '-' }}
+                                  </td>
+
+                                  <td class="px-4 py-3">
+                                    {{ cita.hora || '-' }}
+                                  </td>
+
+                                  <td class="px-4 py-3">
+                                    {{ cita.idMedico || '-' }}
+                                  </td>
+
+                                  <td class="px-4 py-3">
+                                    <span class="rounded-full border px-3 py-1 text-xs font-bold" [class]="estadoColor(cita.estado)">
+                                      {{ cita.estado || 'Sin estado' }}
+                                    </span>
+                                  </td>
+
+                                  <td class="px-4 py-3">
+                                    {{ cita.motivoConsulta || '-' }}
+                                  </td>
+
+                                  <td class="px-4 py-3">
+                                    {{ cita.observaciones || '-' }}
+                                  </td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                </div>
+              }
+
+            }
+          }
+
+        </div>
       </div>
 
-    </div>
+    }
 
   </div>
+
 </section>

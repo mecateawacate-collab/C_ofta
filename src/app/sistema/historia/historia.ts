@@ -1,216 +1,259 @@
-import { Component, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 
 interface HistoriaClinica {
-  idHistoria: number;
-  fechaRegistro: string;
-  diagnosticoVisual: string;
-  agudezaVisual: string;
-  tratamiento: string;
-  receta: string;
+  idHistoria: string;
+  idPaciente: string;
+  fechaApertura: string;
+  pacienteNombre: string;
+  pacienteDni: string;
+  pacienteTelefono: string;
+  pacienteDireccion: string;
+}
+
+interface PacienteSinHistoria {
+  idPaciente: string;
+  nombre: string;
+  dni: string;
+  direccion: string;
+  telefono: string;
+  fechaNacimiento: string;
+}
+
+interface CitaPaciente {
+  idCita: string;
+  idHistoria: string;
+  idMedico: string;
+  fecha: string;
+  hora: string;
+  estado: string;
+  motivoConsulta: string;
   observaciones: string;
+}
+
+interface PacienteHistorial {
+  idPaciente: string;
+  nombre: string;
+  dni: string;
+  direccion: string;
+  telefono: string;
+  fechaNacimiento: string;
+  tieneHistoria: boolean;
+  idHistoria: string;
+  fechaApertura: string;
+  citas: CitaPaciente[];
 }
 
 @Component({
   selector: 'app-historia',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './historia.html',
-  styleUrl: './historia.css'
 })
-export class Historia {
-  busqueda = '';
+export class Historia implements OnInit {
+  private readonly apiUrl = 'https://script.google.com/macros/s/AKfycbyRauU-XB-3HhJgytE3Cap62Hkkw8SgytpBquRCLEkL5RNsrrLNY7jVPp0icb89kjQTZQ/exec';
 
-  modoEdicion = false;
-  historiaSeleccionada: HistoriaClinica | null = null;
+  historias: HistoriaClinica[] = [];
+  pacientesSinHistoria: PacienteSinHistoria[] = [];
+  pacientesHistorial: PacienteHistorial[] = [];
 
-  nuevaHistoria: HistoriaClinica = {
-    idHistoria: 0,
-    fechaRegistro: '',
-    diagnosticoVisual: '',
-    agudezaVisual: '',
-    tratamiento: '',
-    receta: '',
-    observaciones: ''
-  };
+  textoBusqueda = '';
 
-  historias: HistoriaClinica[] = [
-    {
-      idHistoria: 1,
-      fechaRegistro: '2026-05-25',
-      diagnosticoVisual: 'Evaluación visual inicial',
-      agudezaVisual: 'OD 20/40 - OI 20/30',
-      tratamiento: 'Uso de lentes correctivos y control oftalmológico',
-      receta: 'Lentes correctivos según medida indicada',
-      observaciones: 'Historia clínica creada para el paciente yemm con DNI 10203040.'
-    }
-  ];
+  cargando = false;
+  guardando = false;
+  buscando = false;
 
-  @HostListener('document:keydown', ['$event'])
-  detectarTecla(evento: KeyboardEvent): void {
-    const elemento = evento.target as HTMLElement;
+  mensajeOk = '';
+  mensajeError = '';
 
-    const escribiendo =
-      elemento.tagName === 'INPUT' ||
-      elemento.tagName === 'TEXTAREA' ||
-      elemento.tagName === 'SELECT';
+  constructor(private cdr: ChangeDetectorRef) {}
 
-    if (escribiendo) {
-      return;
-    }
+  ngOnInit(): void {
+    this.cargarDatos();
+  }
 
-    if (evento.key.toLowerCase() === 'ñ') {
-      this.agregarHistoriaRapida();
+  async cargarDatos(): Promise<void> {
+    this.cargando = true;
+    this.mensajeError = '';
+    this.mensajeOk = '';
+    this.refrescarVista();
+
+    try {
+      await this.cargarHistorias();
+      await this.cargarPacientesSinHistoria();
+
+      this.pacientesHistorial = [];
+    } catch (error) {
+      console.error(error);
+      this.mensajeError = 'No se pudieron cargar los datos de historias.';
+    } finally {
+      this.cargando = false;
+      this.refrescarVista();
     }
   }
 
-  get historiasFiltradas(): HistoriaClinica[] {
-    const texto = this.busqueda.trim().toLowerCase();
+  async cargarHistorias(): Promise<void> {
+    const respuesta = await this.fetchConTiempo(
+      `${this.apiUrl}?action=getHistorias`
+    );
 
-    return this.historias
-      .filter((historia) => {
-        return (
-          historia.idHistoria.toString().includes(texto) ||
-          historia.fechaRegistro.toLowerCase().includes(texto) ||
-          historia.diagnosticoVisual.toLowerCase().includes(texto) ||
-          historia.agudezaVisual.toLowerCase().includes(texto) ||
-          historia.tratamiento.toLowerCase().includes(texto) ||
-          historia.receta.toLowerCase().includes(texto) ||
-          historia.observaciones.toLowerCase().includes(texto)
-        );
-      })
-      .sort((a, b) => b.idHistoria - a.idHistoria);
-  }
+    const data = await respuesta.json();
 
-  registrarHistoria(): void {
-    if (
-      !this.nuevaHistoria.fechaRegistro ||
-      !this.nuevaHistoria.diagnosticoVisual ||
-      !this.nuevaHistoria.agudezaVisual ||
-      !this.nuevaHistoria.tratamiento ||
-      !this.nuevaHistoria.receta
-    ) {
-      alert('Complete los campos principales de la historia clínica.');
-      return;
+    if (!data.ok) {
+      throw new Error(data.mensaje || 'Error al cargar historias');
     }
 
-    if (this.modoEdicion) {
-      this.actualizarHistoria();
-      return;
+    this.historias = data.historias || [];
+    this.refrescarVista();
+  }
+
+  async cargarPacientesSinHistoria(): Promise<void> {
+    const respuesta = await this.fetchConTiempo(
+      `${this.apiUrl}?action=getPacientesSinHistoria`
+    );
+
+    const data = await respuesta.json();
+
+    if (!data.ok) {
+      throw new Error(data.mensaje || 'Error al cargar pacientes sin historia');
     }
 
-    const historiaGenerada: HistoriaClinica = {
-      idHistoria: this.generarId(),
-      fechaRegistro: this.nuevaHistoria.fechaRegistro,
-      diagnosticoVisual: this.nuevaHistoria.diagnosticoVisual.trim(),
-      agudezaVisual: this.nuevaHistoria.agudezaVisual.trim(),
-      tratamiento: this.nuevaHistoria.tratamiento.trim(),
-      receta: this.nuevaHistoria.receta.trim(),
-      observaciones: this.nuevaHistoria.observaciones.trim()
-    };
-
-    this.historias.unshift(historiaGenerada);
-    this.limpiarFormulario();
+    this.pacientesSinHistoria = data.pacientes || [];
+    this.refrescarVista();
   }
 
-  agregarHistoriaRapida(): void {
-    const historiaRapida: HistoriaClinica = {
-      idHistoria: this.generarId(),
-      fechaRegistro: '2026-05-25',
-      diagnosticoVisual: 'qwe',
-      agudezaVisual: '20/20',
-      tratamiento: 'qwe',
-      receta: 'qwe',
-      observaciones: 'qweqwe'
-    };
-
-    this.historias.unshift(historiaRapida);
-  }
-
-  editarHistoria(historia: HistoriaClinica): void {
-    this.modoEdicion = true;
-
-    this.nuevaHistoria = {
-      idHistoria: historia.idHistoria,
-      fechaRegistro: historia.fechaRegistro,
-      diagnosticoVisual: historia.diagnosticoVisual,
-      agudezaVisual: historia.agudezaVisual,
-      tratamiento: historia.tratamiento,
-      receta: historia.receta,
-      observaciones: historia.observaciones
-    };
-  }
-
-  actualizarHistoria(): void {
-    const indice = this.historias.findIndex((historia) => {
-      return historia.idHistoria === this.nuevaHistoria.idHistoria;
-    });
-
-    if (indice === -1) {
-      alert('No se encontró la historia clínica.');
-      return;
-    }
-
-    this.historias[indice] = {
-      idHistoria: this.nuevaHistoria.idHistoria,
-      fechaRegistro: this.nuevaHistoria.fechaRegistro,
-      diagnosticoVisual: this.nuevaHistoria.diagnosticoVisual.trim(),
-      agudezaVisual: this.nuevaHistoria.agudezaVisual.trim(),
-      tratamiento: this.nuevaHistoria.tratamiento.trim(),
-      receta: this.nuevaHistoria.receta.trim(),
-      observaciones: this.nuevaHistoria.observaciones.trim()
-    };
-
-    this.limpiarFormulario();
-  }
-
-  verHistoria(historia: HistoriaClinica): void {
-    this.historiaSeleccionada = historia;
-  }
-
-  cerrarDetalle(): void {
-    this.historiaSeleccionada = null;
-  }
-
-  eliminarHistoria(idHistoria: number): void {
-    const confirmar = confirm('¿Desea eliminar esta historia clínica?');
+  async crearHistoria(paciente: PacienteSinHistoria): Promise<void> {
+    const confirmar = confirm(`¿Crear historia clínica para ${paciente.nombre}?`);
 
     if (!confirmar) {
       return;
     }
 
-    this.historias = this.historias.filter((historia) => {
-      return historia.idHistoria !== idHistoria;
-    });
+    this.guardando = true;
+    this.mensajeError = '';
+    this.mensajeOk = '';
+    this.refrescarVista();
 
-    if (this.historiaSeleccionada?.idHistoria === idHistoria) {
-      this.historiaSeleccionada = null;
-    }
+    try {
+      const url = `${this.apiUrl}?action=crearHistoria&idPaciente=${encodeURIComponent(paciente.idPaciente)}`;
 
-    if (this.nuevaHistoria.idHistoria === idHistoria) {
-      this.limpiarFormulario();
+      const respuesta = await this.fetchConTiempo(url);
+      const data = await respuesta.json();
+
+      if (!data.ok) {
+        this.mensajeError = data.mensaje || 'No se pudo crear la historia.';
+        this.refrescarVista();
+        return;
+      }
+
+      this.mensajeOk = data.mensaje || 'Historia clínica creada correctamente.';
+      this.refrescarVista();
+
+      await this.cargarDatos();
+    } catch (error) {
+      console.error(error);
+      this.mensajeError = 'Error al crear la historia clínica.';
+    } finally {
+      this.guardando = false;
+      this.refrescarVista();
     }
   }
 
-  limpiarFormulario(): void {
-    this.modoEdicion = false;
+  async buscarHistorial(): Promise<void> {
+    const textoLimpio = this.textoBusqueda.trim();
 
-    this.nuevaHistoria = {
-      idHistoria: 0,
-      fechaRegistro: '',
-      diagnosticoVisual: '',
-      agudezaVisual: '',
-      tratamiento: '',
-      receta: '',
-      observaciones: ''
-    };
-  }
-
-  private generarId(): number {
-    if (this.historias.length === 0) {
-      return 1;
+    if (!textoLimpio) {
+      this.pacientesHistorial = [];
+      this.refrescarVista();
+      return;
     }
 
-    return Math.max(...this.historias.map((historia) => historia.idHistoria)) + 1;
+    this.buscando = true;
+    this.mensajeError = '';
+    this.refrescarVista();
+
+    try {
+      const texto = encodeURIComponent(textoLimpio);
+
+      const respuesta = await this.fetchConTiempo(
+        `${this.apiUrl}?action=buscarHistorialPaciente&texto=${texto}`
+      );
+
+      const data = await respuesta.json();
+
+      if (!data.ok) {
+        throw new Error(data.mensaje || 'Error al buscar historial');
+      }
+
+      this.pacientesHistorial = data.pacientes || [];
+    } catch (error) {
+      console.error(error);
+      this.mensajeError = 'No se pudo buscar el historial del paciente.';
+      this.pacientesHistorial = [];
+    } finally {
+      this.buscando = false;
+      this.refrescarVista();
+    }
+  }
+
+  limpiarBusqueda(): void {
+    this.textoBusqueda = '';
+    this.pacientesHistorial = [];
+    this.refrescarVista();
+  }
+
+  totalCitasPaciente(paciente: PacienteHistorial): number {
+    return paciente.citas ? paciente.citas.length : 0;
+  }
+
+  estadoColor(estado: string): string {
+    const estadoNormalizado = String(estado || '').toLowerCase();
+
+    if (estadoNormalizado.includes('pendiente')) {
+      return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    }
+
+    if (estadoNormalizado.includes('confirmada')) {
+      return 'bg-sky-100 text-sky-700 border-sky-200';
+    }
+
+    if (estadoNormalizado.includes('pagada')) {
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    }
+
+    if (estadoNormalizado.includes('atendida')) {
+      return 'bg-purple-100 text-purple-700 border-purple-200';
+    }
+
+    if (estadoNormalizado.includes('cancelada')) {
+      return 'bg-red-100 text-red-700 border-red-200';
+    }
+
+    return 'bg-slate-100 text-slate-700 border-slate-200';
+  }
+
+  private async fetchConTiempo(url: string, tiempoMaximo = 15000): Promise<Response> {
+    const controlador = new AbortController();
+
+    const tiempo = setTimeout(() => {
+      controlador.abort();
+    }, tiempoMaximo);
+
+    try {
+      return await fetch(url, {
+        signal: controlador.signal,
+      });
+    } finally {
+      clearTimeout(tiempo);
+    }
+  }
+
+  private refrescarVista(): void {
+    try {
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.warn('No se pudo refrescar la vista todavía.', error);
+    }
   }
 }

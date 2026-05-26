@@ -1,0 +1,14 @@
+hoja de sheets
+https://docs.google.com/spreadsheets/d/1HGCXlqRRsIgeKR0u-ZjbmmUXTA6aRMIUC5cw5YmDI1Q/edit?usp=sharing
+
+USUARIOS de prueba
+
+| idUsuario | Nombre    | Usuario / Correo | Contraseña | Rol           |
+|----------:|-----------|------------------|------------|---------------|
+| 1         | admin     | admin            | 123        | Administrador |
+| 2         | awacate   | awacate          | 123        | Administrador |
+| 3         | qwerty    | qwerty           | 123        | Medico        |
+| 4         | yemm      | yemm             | 123        | Sin rol       |
+| 5         | medico    | medico           | 123        | Medico        |
+| 6         | bloqueado | bloqueado        | 123        | Sin rol       |
+
