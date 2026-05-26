@@ -3,7 +3,6 @@
 
     <div class="grid w-full grid-cols-1 overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-xl lg:grid-cols-2">
 
-      <!-- Panel visual -->
       <div class="hidden bg-linear-to-br from-sky-500 to-cyan-400 p-10 text-white lg:block">
         <div class="flex h-full flex-col justify-between">
 
@@ -40,7 +39,6 @@
         </div>
       </div>
 
-      <!-- Formulario -->
       <div class="p-8 md:p-10">
         <div class="text-center">
           <span class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-medium text-sky-700">
@@ -59,7 +57,6 @@
 
         <form class="mt-8 space-y-5" (ngSubmit)="ingresar()">
 
-          <!-- Usuario -->
           <div>
             <label class="mb-2 block text-sm font-semibold text-slate-700">
               Usuario
@@ -79,7 +76,6 @@
             </div>
           </div>
 
-          <!-- Contraseña -->
           <div>
             <label class="mb-2 block text-sm font-semibold text-slate-700">
               Contraseña
@@ -111,7 +107,6 @@
             </div>
           </div>
 
-          <!-- Error -->
           @if (mensajeError) {
             <div class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
               <i class="bi bi-exclamation-circle mr-1"></i>
@@ -119,7 +114,6 @@
             </div>
           }
 
-          <!-- Botón -->
           <button
             type="submit"
             [disabled]="cargando"
@@ -135,8 +129,6 @@
           </button>
 
         </form>
-
-        <!-- Usuarios de prueba -->
 
       </div>
 

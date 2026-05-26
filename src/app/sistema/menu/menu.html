@@ -1,7 +1,6 @@
 <section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10">
   <div class="mx-auto max-w-7xl">
 
-    <!-- Encabezado -->
     <div class="rounded-3xl border border-sky-100 bg-white p-8 shadow-sm">
       <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 
@@ -14,6 +13,10 @@
           <h1 class="mt-5 text-4xl font-bold text-sky-950">
             Sistema Oftalmológico
           </h1>
+
+          <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">
+            Accede a los módulos disponibles según el rol de tu cuenta.
+          </p>
         </div>
 
         <div class="rounded-3xl border border-sky-100 bg-sky-50 p-5">
@@ -50,15 +53,17 @@
       </div>
     </div>
 
-    <!-- Tarjetas principales -->
     <div class="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2">
 
-      @for (opcion of opciones; track opcion.ruta) {
+      @for (opcion of opcionesVisibles; track opcion.ruta) {
         <a
           [routerLink]="opcion.ruta"
           class="group overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
         >
-          <div class="bg-linear-to-br p-8 text-white" [class]="opcion.color">
+          <div
+            class="bg-linear-to-br p-8 text-white"
+            [ngClass]="opcion.color"
+          >
             <div class="flex items-center justify-between">
               <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 text-4xl">
                 <i [class]="opcion.icono"></i>
@@ -86,7 +91,6 @@
 
     </div>
 
-    <!-- Resumen inferior -->
     <div class="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
       <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
@@ -99,6 +103,7 @@
             <h3 class="font-bold text-sky-950">
               Pacientes
             </h3>
+
             <p class="text-sm text-slate-500">
               Datos personales e identificación.
             </p>
@@ -116,8 +121,9 @@
             <h3 class="font-bold text-sky-950">
               Citas
             </h3>
+
             <p class="text-sm text-slate-500">
-              Pendientes, confirmadas y canceladas.
+              Pendientes, confirmadas, pagadas y atendidas.
             </p>
           </div>
         </div>
@@ -133,8 +139,9 @@
             <h3 class="font-bold text-sky-950">
               Historia clínica
             </h3>
+
             <p class="text-sm text-slate-500">
-              Se conectará desde pacientes y citas.
+              Consultas, diagnóstico, tratamiento y receta.
             </p>
           </div>
         </div>
@@ -142,25 +149,25 @@
 
     </div>
 
-    <!-- Nota -->
-    <div class="mt-10 rounded-3xl border border-cyan-100 bg-linear-to-r from-sky-500 to-cyan-400 p-6 text-white shadow-md">
-      <div class="flex gap-4">
-        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
-          <i class="bi bi-info-circle text-xl"></i>
-        </div>
+    @if (esAdministrador) {
+      <div class="mt-10 rounded-3xl border border-violet-100 bg-linear-to-r from-violet-500 to-fuchsia-400 p-6 text-white shadow-md">
+        <div class="flex gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+            <i class="bi bi-shield-lock text-xl"></i>
+          </div>
 
-        <div>
-          <h3 class="font-bold">
-            Sistema en modo simulación
-          </h3>
+          <div>
+            <h3 class="font-bold">
+              Acceso de administrador
+            </h3>
 
-          <p class="mt-1 text-sm leading-relaxed text-sky-50">
-            El login, las citas y los módulos principales están funcionando localmente.
-            Más adelante se pueden conectar a Google Sheets con Apps Script.
-          </p>
+            <p class="mt-1 text-sm leading-relaxed text-violet-50">
+              Esta cuenta puede administrar usuarios y modificar roles del sistema.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    }
 
   </div>
 </section>

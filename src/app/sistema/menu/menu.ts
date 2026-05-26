@@ -1,24 +1,34 @@
-import { Component, HostListener } from '@angular/core';
+import { Component } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 
 interface UsuarioSesion {
-  idUsuario: number;
+  idUsuario: number | string;
   nombre: string;
   correo: string;
-  rol: 'Administrador' | 'Medico';
+  rol: string;
+}
+
+interface OpcionMenu {
+  titulo: string;
+  descripcion: string;
+  ruta: string;
+  icono: string;
+  color: string;
+  soloAdmin?: boolean;
 }
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgClass],
   templateUrl: './menu.html',
   styleUrl: './menu.css'
 })
 export class Menu {
   usuario: UsuarioSesion | null = null;
 
-  opciones = [
+  opciones: OpcionMenu[] = [
     {
       titulo: 'Pacientes',
       descripcion: 'Registrar, buscar y revisar información de pacientes.',
@@ -39,6 +49,14 @@ export class Menu {
       ruta: '/historia',
       icono: 'bi bi-journal-medical',
       color: 'from-indigo-500 to-sky-400'
+    },
+    {
+      titulo: 'Usuarios',
+      descripcion: 'Administrar usuarios del sistema y controlar sus roles.',
+      ruta: '/usuarios',
+      icono: 'bi bi-person-gear',
+      color: 'from-violet-500 to-fuchsia-400',
+      soloAdmin: true
     }
   ];
 
@@ -46,22 +64,18 @@ export class Menu {
     this.cargarSesion();
   }
 
-  @HostListener('document:keydown', ['$event'])
-  detectarTecla(evento: KeyboardEvent): void {
-    const elemento = evento.target as HTMLElement;
+  get esAdministrador(): boolean {
+    return this.usuario?.rol === 'Administrador';
+  }
 
-    const escribiendo =
-      elemento.tagName === 'INPUT' ||
-      elemento.tagName === 'TEXTAREA' ||
-      elemento.tagName === 'SELECT';
+  get opcionesVisibles(): OpcionMenu[] {
+    return this.opciones.filter((opcion) => {
+      if (!opcion.soloAdmin) {
+        return true;
+      }
 
-    if (escribiendo) {
-      return;
-    }
-
-    if (evento.key.toLowerCase() === 'ñ') {
-      this.router.navigate(['/historia']);
-    }
+      return this.esAdministrador;
+    });
   }
 
   cargarSesion(): void {
@@ -72,7 +86,20 @@ export class Menu {
       return;
     }
 
-    this.usuario = JSON.parse(data) as UsuarioSesion;
+    try {
+      const usuarioGuardado = JSON.parse(data) as UsuarioSesion;
+
+      if (!usuarioGuardado.rol) {
+        localStorage.removeItem('usuarioLogin');
+        this.router.navigate(['/login']);
+        return;
+      }
+
+      this.usuario = usuarioGuardado;
+    } catch {
+      localStorage.removeItem('usuarioLogin');
+      this.router.navigate(['/login']);
+    }
   }
 
   cerrarSesion(): void {

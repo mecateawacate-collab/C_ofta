@@ -1,19 +1,24 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule, HttpParams } from '@angular/common/http';
+import { finalize, timeout } from 'rxjs';
 
-interface UsuarioSistema {
-  idUsuario: number;
-  nombre: string;
-  correo: string;
-  contrasena: string;
-  rol: 'Administrador' | 'Medico';
+interface RespuestaLogin {
+  success: boolean;
+  message: string;
+  usuario?: {
+    idUsuario: number | string;
+    nombre: string;
+    correo: string;
+    rol: string;
+  };
 }
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HttpClientModule],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -24,24 +29,12 @@ export class Login {
   mostrarClave = false;
   cargando = false;
 
-  usuarios: UsuarioSistema[] = [
-    {
-      idUsuario: 1,
-      nombre: 'mecate',
-      correo: 'admin',
-      contrasena: '123',
-      rol: 'Administrador'
-    },
-    {
-      idUsuario: 2,
-      nombre: 'asfafasfasf',
-      correo: 'awacate',
-      contrasena: '123123',
-      rol: 'Medico'
-    }
-  ];
+  private apiUrl = 'https://script.google.com/macros/s/AKfycbyRauU-XB-3HhJgytE3Cap62Hkkw8SgytpBquRCLEkL5RNsrrLNY7jVPp0icb89kjQTZQ/exec';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private http: HttpClient
+  ) {}
 
   ingresar(): void {
     this.mensajeError = '';
@@ -56,31 +49,34 @@ export class Login {
 
     this.cargando = true;
 
-    setTimeout(() => {
-      const usuarioEncontrado = this.usuarios.find((usuario) => {
-        return (
-          usuario.correo.toLowerCase() === usuarioLimpio &&
-          usuario.contrasena === claveLimpia
-        );
+    const params = new HttpParams()
+      .set('action', 'loginTrabajador')
+      .set('correo', usuarioLimpio)
+      .set('clave', claveLimpia)
+      .set('t', Date.now().toString());
+
+    this.http
+      .get<RespuestaLogin>(this.apiUrl, { params })
+      .pipe(
+        timeout(12000),
+        finalize(() => {
+          this.cargando = false;
+        })
+      )
+      .subscribe({
+        next: (respuesta) => {
+          if (!respuesta.success || !respuesta.usuario) {
+            this.mensajeError = respuesta.message || 'Usuario o contraseña incorrectos';
+            return;
+          }
+
+          localStorage.setItem('usuarioLogin', JSON.stringify(respuesta.usuario));
+
+          this.router.navigate(['/menu']);
+        },
+        error: () => {
+          this.mensajeError = 'El servidor tardó demasiado en responder. Intente nuevamente.';
+        }
       });
-
-      this.cargando = false;
-
-      if (!usuarioEncontrado) {
-        this.mensajeError = 'Usuario o contraseña incorrectos';
-        return;
-      }
-
-      const sesion = {
-        idUsuario: usuarioEncontrado.idUsuario,
-        nombre: usuarioEncontrado.nombre,
-        correo: usuarioEncontrado.correo,
-        rol: usuarioEncontrado.rol
-      };
-
-      localStorage.setItem('usuarioLogin', JSON.stringify(sesion));
-
-      this.router.navigate(['/menu']);
-    }, 600);
   }
 }

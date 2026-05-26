@@ -1,0 +1,204 @@
+<section class="min-h-screen bg-[#F6F4FA] px-4 py-8 text-[#1E1B3A]">
+  <div class="mx-auto max-w-6xl">
+
+    <div class="mb-8 rounded-2xl border border-[#E5DFF0] bg-white p-6 shadow-lg">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-wide text-[#7C6BB0]">
+            Administración
+          </p>
+
+          <h1 class="mt-1 text-3xl font-extrabold text-[#3B2E6D]">
+            Gestión de usuarios
+          </h1>
+
+          <p class="mt-2 text-sm leading-6 text-[#5B5870]">
+            Desde aquí puedes modificar el nombre y el rol de los usuarios registrados en el sistema.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="cargarUsuarios()"
+          class="rounded-xl bg-[#3B2E6D] px-5 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#2F2458]"
+        >
+          Actualizar lista
+        </button>
+      </div>
+    </div>
+
+    @if (mensaje) {
+      <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-semibold text-green-700">
+        {{ mensaje }}
+      </div>
+    }
+
+    @if (error) {
+      <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+        {{ error }}
+      </div>
+    }
+
+    <div class="mb-6 rounded-2xl border border-[#E5DFF0] bg-white p-5 shadow-md">
+      <div class="grid gap-4 md:grid-cols-[1fr_220px]">
+        <div>
+          <label class="mb-2 block text-sm font-bold text-[#3B2E6D]">
+            Buscar usuario
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="filtro"
+            (ngModelChange)="aplicarFiltros()"
+            placeholder="Buscar por nombre, correo o ID..."
+            class="w-full rounded-xl border border-[#D8D0EA] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#7C6BB0] focus:ring-2 focus:ring-[#E8E1F5]"
+          />
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-bold text-[#3B2E6D]">
+            Filtrar por rol
+          </label>
+
+          <select
+            [(ngModel)]="filtroRol"
+            (ngModelChange)="aplicarFiltros()"
+            class="w-full rounded-xl border border-[#D8D0EA] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#7C6BB0] focus:ring-2 focus:ring-[#E8E1F5]"
+          >
+            <option value="Todos">Todos</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Medico">Médico</option>
+            <option value="Sin rol">Sin rol</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    @if (cargando) {
+      <div class="rounded-2xl border border-[#E5DFF0] bg-white p-10 text-center shadow-md">
+        <p class="text-lg font-bold text-[#3B2E6D]">
+          Cargando usuarios...
+        </p>
+
+        <p class="mt-2 text-sm text-[#5B5870]">
+          Espera un momento mientras se consulta la información.
+        </p>
+      </div>
+    }
+
+    @if (!cargando && usuariosFiltrados.length === 0) {
+      <div class="rounded-2xl border border-[#E5DFF0] bg-white p-10 text-center shadow-md">
+        <p class="text-lg font-bold text-[#3B2E6D]">
+          No se encontraron usuarios
+        </p>
+
+        <p class="mt-2 text-sm text-[#5B5870]">
+          Prueba cambiando el texto de búsqueda o el filtro de rol.
+        </p>
+      </div>
+    }
+
+    @if (!cargando && usuariosFiltrados.length > 0) {
+      <div class="overflow-hidden rounded-2xl border border-[#E5DFF0] bg-white shadow-lg">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-212.5 border-collapse text-left text-sm">
+            <thead class="bg-[#3B2E6D] text-white">
+              <tr>
+                <th class="px-5 py-4 font-bold">ID</th>
+                <th class="px-5 py-4 font-bold">Nombre</th>
+                <th class="px-5 py-4 font-bold">Correo</th>
+                <th class="px-5 py-4 font-bold">Rol</th>
+                <th class="px-5 py-4 text-right font-bold">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (usuario of usuariosFiltrados; track usuario.idUsuario) {
+                <tr class="border-b border-[#EEE8F7] transition hover:bg-[#FAF8FE]">
+                  <td class="px-5 py-4 font-bold text-[#3B2E6D]">
+                    {{ usuario.idUsuario }}
+                  </td>
+
+                  <td class="px-5 py-4">
+                    @if (!usuario.editando) {
+                      <span class="font-semibold text-[#1E1B3A]">
+                        {{ usuario.nombre || 'Sin nombre' }}
+                      </span>
+                    } @else {
+                      <input
+                        type="text"
+                        [(ngModel)]="usuario.nombre"
+                        class="w-full rounded-xl border border-[#D8D0EA] px-3 py-2 text-sm outline-none transition focus:border-[#7C6BB0] focus:ring-2 focus:ring-[#E8E1F5]"
+                      />
+                    }
+                  </td>
+
+                  <td class="px-5 py-4 text-[#5B5870]">
+                    {{ usuario.correo || 'Sin correo' }}
+                  </td>
+
+                  <td class="px-5 py-4">
+                    @if (!usuario.editando) {
+                      <span
+                        class="inline-flex rounded-full border px-3 py-1 text-xs font-bold"
+                        [ngClass]="obtenerClaseRol(usuario.rol)"
+                      >
+                        {{ usuario.rol }}
+                      </span>
+                    } @else {
+                      <select
+                        [(ngModel)]="usuario.rol"
+                        class="w-full rounded-xl border border-[#D8D0EA] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#7C6BB0] focus:ring-2 focus:ring-[#E8E1F5]"
+                      >
+                        @for (rol of roles; track rol) {
+                          <option [ngValue]="rol">
+                            {{ rol }}
+                          </option>
+                        }
+                      </select>
+                    }
+                  </td>
+
+                  <td class="px-5 py-4">
+                    <div class="flex justify-end gap-2">
+                      @if (!usuario.editando) {
+                        <button
+                          type="button"
+                          (click)="editarUsuario(usuario)"
+                          class="rounded-xl bg-[#7C6BB0] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#66539C]"
+                        >
+                          Editar
+                        </button>
+                      }
+
+                      @if (usuario.editando) {
+                        <button
+                          type="button"
+                          (click)="guardarUsuario(usuario)"
+                          [disabled]="usuario.guardando"
+                          class="rounded-xl bg-green-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {{ usuario.guardando ? 'Guardando...' : 'Guardar' }}
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="cancelarEdicion(usuario)"
+                          [disabled]="usuario.guardando"
+                          class="rounded-xl bg-gray-200 px-4 py-2 text-xs font-bold text-gray-700 shadow-sm transition hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Cancelar
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  </div>
+</section>

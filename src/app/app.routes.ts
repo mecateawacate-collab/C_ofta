@@ -13,6 +13,7 @@ import { Menu } from './sistema/menu/menu';
 import { Pacientes } from './sistema/pacientes/pacientes';
 import { Citas } from './sistema/citas/citas';
 import { Historia } from './sistema/historia/historia';
+import { Usuarios } from './sistema/usuarios/usuarios';
 
 
 
@@ -30,6 +31,7 @@ export const routes: Routes = [
     {path: 'pacientes', component: Pacientes },
     {path: 'citas', component: Citas },
     {path: 'historia', component: Historia },
+    {path: 'usuarios', component: Usuarios },
 
 
     { path: '**', redirectTo: 'index' }

@@ -1,7 +1,6 @@
 <section class="min-h-screen bg-linear-to-b from-sky-50 via-white to-white px-6 py-10">
   <div class="mx-auto max-w-7xl">
 
-    <!-- Encabezado -->
     <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
       <div>
         <span class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-2 text-sm font-medium text-sky-700">
@@ -14,7 +13,7 @@
         </h1>
 
         <p class="mt-3 max-w-2xl text-slate-600">
-          Registra y administra las citas de atención oftalmológica.
+          Registra citas usando una historia clínica ya creada.
         </p>
       </div>
 
@@ -26,9 +25,13 @@
       </div>
     </div>
 
-    <!-- Resumen -->
-    <div class="mt-10 grid grid-cols-1 gap-5 md:grid-cols-4">
+    @if (cargando) {
+      <div class="mt-8 rounded-3xl border border-sky-100 bg-white p-6 text-center text-slate-500 shadow-sm">
+        Cargando citas...
+      </div>
+    }
 
+    <div class="mt-10 grid grid-cols-1 gap-5 md:grid-cols-5">
       <div class="rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
@@ -55,6 +58,21 @@
 
           <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
             <i class="bi bi-check2-circle text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-3xl border border-indigo-100 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-500">Pagadas</p>
+            <p class="mt-2 text-3xl font-bold text-indigo-600">
+              {{ contarPorEstado('Pagada') }}
+            </p>
+          </div>
+
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+            <i class="bi bi-credit-card text-xl"></i>
           </div>
         </div>
       </div>
@@ -88,12 +106,10 @@
           </div>
         </div>
       </div>
-
     </div>
 
     <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
 
-      <!-- Formulario -->
       <div class="lg:col-span-1">
         <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
 
@@ -107,12 +123,51 @@
                 Nueva cita
               </h2>
               <p class="text-sm text-slate-500">
-                Complete los datos de atención.
+                Seleccione historia, médico y horario.
               </p>
             </div>
           </div>
 
           <form class="mt-6 space-y-4" (ngSubmit)="registrarCita()">
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Historia clínica
+              </label>
+
+              <select
+                name="idHistoria"
+                [(ngModel)]="nuevaCita.idHistoria"
+                (change)="seleccionarHistoria()"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+                <option [ngValue]="null">Seleccione historia</option>
+                @for (historia of historias; track historia.idHistoria) {
+                  <option [ngValue]="historia.idHistoria">
+                    Historia {{ historia.idHistoria }} - {{ historia.nombrePaciente }} - DNI {{ historia.dniPaciente }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Médico
+              </label>
+
+              <select
+                name="idMedico"
+                [(ngModel)]="nuevaCita.idMedico"
+                class="w-full rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
+              >
+                <option [ngValue]="null">Seleccione médico</option>
+                @for (medico of medicos; track medico.idMedico) {
+                  <option [ngValue]="medico.idMedico">
+                    {{ medico.nombre }} - {{ medico.especialidad }}
+                  </option>
+                }
+              </select>
+            </div>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <div>
@@ -172,8 +227,8 @@
 
               <textarea
                 rows="5"
-                name="obserrvaciones"
-                [(ngModel)]="nuevaCita.obserrvaciones"
+                name="observaciones"
+                [(ngModel)]="nuevaCita.observaciones"
                 placeholder="Escriba detalles adicionales de la cita..."
                 class="w-full resize-none rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-slate-700 outline-none transition focus:border-sky-400 focus:bg-white"
               ></textarea>
@@ -182,10 +237,11 @@
             <div class="flex flex-col gap-3 sm:flex-row">
               <button
                 type="submit"
-                class="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-sky-600"
+                [disabled]="guardando"
+                class="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 font-semibold text-white shadow-md transition hover:bg-sky-600 disabled:opacity-60"
               >
                 <i class="bi bi-save"></i>
-                Registrar cita
+                {{ guardando ? 'Guardando...' : 'Registrar cita' }}
               </button>
 
               <button
@@ -202,7 +258,6 @@
         </div>
       </div>
 
-      <!-- Listado -->
       <div class="lg:col-span-2">
         <div class="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
 
@@ -234,6 +289,7 @@
                 <option>Todos</option>
                 <option>Pendiente</option>
                 <option>Confirmada</option>
+                <option>Pagada</option>
                 <option>Atendida</option>
                 <option>Cancelada</option>
               </select>
@@ -241,10 +297,12 @@
           </div>
 
           <div class="mt-6 overflow-x-auto">
-            <table class="w-full min-w-[850px] border-separate border-spacing-y-3">
+            <table class="w-full min-w-262.5 border-separate border-spacing-y-3">
               <thead>
                 <tr class="text-left text-sm text-slate-500">
                   <th class="px-4 py-2">ID</th>
+                  <th class="px-4 py-2">Paciente</th>
+                  <th class="px-4 py-2">Médico</th>
                   <th class="px-4 py-2">Fecha</th>
                   <th class="px-4 py-2">Hora</th>
                   <th class="px-4 py-2">Estado</th>
@@ -258,6 +316,19 @@
                   <tr class="rounded-2xl bg-sky-50 text-sm text-slate-700">
                     <td class="rounded-l-2xl px-4 py-4 font-bold text-sky-700">
                       {{ cita.idCita }}
+                    </td>
+
+                    <td class="px-4 py-4">
+                      <p class="font-semibold text-sky-950">
+                        {{ nombrePaciente(cita) }}
+                      </p>
+                      <p class="mt-1 text-xs text-slate-500">
+                        Historia {{ cita.idHistoria }}
+                      </p>
+                    </td>
+
+                    <td class="px-4 py-4">
+                      {{ nombreMedico(cita) }}
                     </td>
 
                     <td class="px-4 py-4">
@@ -283,7 +354,7 @@
                       </p>
 
                       <p class="mt-1 max-w-xs truncate text-xs text-slate-500">
-                        {{ cita.obserrvaciones || 'Sin observaciones' }}
+                        {{ cita.observaciones || 'Sin observaciones' }}
                       </p>
                     </td>
 
@@ -296,6 +367,14 @@
                           class="rounded-full bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200"
                         >
                           Confirmar
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="pagarCita(cita)"
+                          class="rounded-full bg-indigo-100 px-3 py-2 text-xs font-bold text-indigo-700 transition hover:bg-indigo-200"
+                        >
+                          Pagar
                         </button>
 
                         <button
@@ -335,7 +414,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="6" class="rounded-2xl bg-sky-50 px-4 py-8 text-center text-slate-500">
+                    <td colspan="8" class="rounded-2xl bg-sky-50 px-4 py-8 text-center text-slate-500">
                       No se encontraron citas.
                     </td>
                   </tr>

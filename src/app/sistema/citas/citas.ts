@@ -1,61 +1,87 @@
-import { Component, HostListener } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+type EstadoCita = 'Pendiente' | 'Confirmada' | 'Cancelada' | 'Pagada' | 'Atendida';
 
 interface Cita {
   idCita: number;
+  idPaciente: number;
+  idHistoria: number;
+  idMedico: number;
   fecha: string;
   hora: string;
-  estado: 'Pendiente' | 'Confirmada' | 'Atendida' | 'Cancelada';
+  estado: EstadoCita;
   motivoConsulta: string;
-  obserrvaciones: string;
+  observaciones: string;
+}
+
+interface NuevaCita {
+  idHistoria: number | null;
+  idPaciente: number | null;
+  idMedico: number | null;
+  fecha: string;
+  hora: string;
+  motivoConsulta: string;
+  observaciones: string;
+}
+
+interface HistoriaCita {
+  idHistoria: number;
+  idPaciente: number;
+  fechaApertura: string;
+  nombrePaciente: string;
+  dniPaciente: string;
+  telefonoPaciente: string;
+}
+
+interface MedicoCita {
+  idMedico: number;
+  idUsuario: number;
+  nombre: string;
+  correo: string;
+  especialidad: string;
+  telefono: string;
 }
 
 @Component({
   selector: 'app-citas',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HttpClientModule],
   templateUrl: './citas.html',
   styleUrl: './citas.css'
 })
-export class Citas {
+export class Citas implements OnInit {
+  private apiUrl = 'https://script.google.com/macros/s/AKfycbyRauU-XB-3HhJgytE3Cap62Hkkw8SgytpBquRCLEkL5RNsrrLNY7jVPp0icb89kjQTZQ/exec';
+
   busqueda = '';
   filtroEstado = 'Todos';
+  cargando = false;
+  guardando = false;
 
-  nuevaCita: Cita = {
-    idCita: 0,
+  citas: Cita[] = [];
+  historias: HistoriaCita[] = [];
+  medicos: MedicoCita[] = [];
+
+  nuevaCita: NuevaCita = {
+    idHistoria: null,
+    idPaciente: null,
+    idMedico: null,
     fecha: '',
     hora: '',
-    estado: 'Pendiente',
     motivoConsulta: '',
-    obserrvaciones: ''
+    observaciones: ''
   };
 
-  citas: Cita[] = [
-    {
-      idCita: 1,
-      fecha: '2026-05-26',
-      hora: '09:00',
-      estado: 'Pendiente',
-      motivoConsulta: 'Consulta oftalmológica general',
-      obserrvaciones: 'Paciente solicita evaluación inicial.'
-    },
-    {
-      idCita: 2,
-      fecha: '2026-05-26',
-      hora: '10:30',
-      estado: 'Confirmada',
-      motivoConsulta: 'Medida de vista',
-      obserrvaciones: 'Paciente indica dificultad para ver de lejos.'
-    },
-    {
-      idCita: 3,
-      fecha: '2026-05-27',
-      hora: '15:00',
-      estado: 'Atendida',
-      motivoConsulta: 'Ojo rojo',
-      obserrvaciones: 'Se realizó revisión básica.'
-    }
-  ];
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarDatos();
+  }
 
   @HostListener('document:keydown', ['$event'])
   detectarTecla(evento: KeyboardEvent): void {
@@ -71,7 +97,7 @@ export class Citas {
     }
 
     if (evento.key.toLowerCase() === 'ñ') {
-      this.agregarCitaRapida();
+      this.cargarDatos();
     }
   }
 
@@ -80,68 +106,161 @@ export class Citas {
 
     return this.citas
       .filter((cita) => {
+        const historia = this.buscarHistoria(cita.idHistoria);
+        const medico = this.buscarMedico(cita.idMedico);
+
+        const datosPaciente = historia
+          ? `${historia.nombrePaciente} ${historia.dniPaciente}`
+          : '';
+
+        const datosMedico = medico
+          ? `${medico.nombre} ${medico.especialidad}`
+          : '';
+
         const coincideTexto =
           cita.idCita.toString().includes(texto) ||
           cita.fecha.toLowerCase().includes(texto) ||
           cita.hora.toLowerCase().includes(texto) ||
           cita.estado.toLowerCase().includes(texto) ||
           cita.motivoConsulta.toLowerCase().includes(texto) ||
-          cita.obserrvaciones.toLowerCase().includes(texto);
+          cita.observaciones.toLowerCase().includes(texto) ||
+          datosPaciente.toLowerCase().includes(texto) ||
+          datosMedico.toLowerCase().includes(texto);
 
         const coincideEstado =
           this.filtroEstado === 'Todos' || cita.estado === this.filtroEstado;
 
         return coincideTexto && coincideEstado;
       })
-      .sort((a, b) => b.idCita - a.idCita);
+      .sort((a, b) => Number(b.idCita) - Number(a.idCita));
+  }
+
+  cargarDatos(): void {
+    this.cargando = true;
+    this.cdr.detectChanges();
+
+    Promise.all([
+      this.pedir<any>('getCitas'),
+      this.pedir<any>('getHistoriasCita'),
+      this.pedir<any>('getMedicosCita')
+    ])
+      .then(([respuestaCitas, respuestaHistorias, respuestaMedicos]) => {
+        if (!respuestaCitas.success) {
+          alert('Error en getCitas: ' + (respuestaCitas.detail || respuestaCitas.message));
+          return;
+        }
+
+        if (!respuestaHistorias.success) {
+          alert('Error en getHistoriasCita: ' + (respuestaHistorias.detail || respuestaHistorias.message));
+          return;
+        }
+
+        if (!respuestaMedicos.success) {
+          alert('Error en getMedicosCita: ' + (respuestaMedicos.detail || respuestaMedicos.message));
+          return;
+        }
+
+        this.citas = respuestaCitas.citas || [];
+        this.historias = respuestaHistorias.historias || [];
+        this.medicos = respuestaMedicos.medicos || [];
+      })
+      .catch((error) => {
+        console.error(error);
+        alert('Error de conexión al cargar citas.');
+      })
+      .finally(() => {
+        this.cargando = false;
+        this.cdr.detectChanges();
+      });
+  }
+
+  seleccionarHistoria(): void {
+    const historia = this.historias.find(
+      (item) => Number(item.idHistoria) === Number(this.nuevaCita.idHistoria)
+    );
+
+    this.nuevaCita.idPaciente = historia ? Number(historia.idPaciente) : null;
+    this.cdr.detectChanges();
   }
 
   registrarCita(): void {
     if (
+      !this.nuevaCita.idHistoria ||
+      !this.nuevaCita.idPaciente ||
+      !this.nuevaCita.idMedico ||
       !this.nuevaCita.fecha ||
       !this.nuevaCita.hora ||
       !this.nuevaCita.motivoConsulta
     ) {
-      alert('Complete la fecha, hora y motivo de consulta.');
+      alert('Complete historia, médico, fecha, hora y motivo de consulta.');
       return;
     }
 
-    const citaGenerada: Cita = {
-      idCita: this.generarId(),
+    this.guardando = true;
+    this.cdr.detectChanges();
+
+    this.pedir<any>('crearCita', {
+      idPaciente: this.nuevaCita.idPaciente,
+      idHistoria: this.nuevaCita.idHistoria,
+      idMedico: this.nuevaCita.idMedico,
       fecha: this.nuevaCita.fecha,
       hora: this.nuevaCita.hora,
-      estado: 'Pendiente',
       motivoConsulta: this.nuevaCita.motivoConsulta,
-      obserrvaciones: this.nuevaCita.obserrvaciones
-    };
+      observaciones: this.nuevaCita.observaciones
+    })
+      .then((respuesta) => {
+        if (!respuesta.success) {
+          alert(respuesta.message || 'No se pudo registrar la cita.');
+          return;
+        }
 
-    this.citas.unshift(citaGenerada);
-    this.limpiarFormulario();
-  }
-
-  agregarCitaRapida(): void {
-    const citaRapida: Cita = {
-      idCita: this.generarId(),
-      fecha: '2026-05-27',
-      hora: '15:00',
-      estado: 'Pendiente',
-      motivoConsulta: 'Consulta oftalmológica general',
-      obserrvaciones: 'qweqwe'
-    };
-
-    this.citas.unshift(citaRapida);
+        this.citas = [respuesta.cita, ...this.citas];
+        this.limpiarFormulario();
+      })
+      .catch(() => {
+        alert('Error al registrar la cita.');
+      })
+      .finally(() => {
+        this.guardando = false;
+        this.cdr.detectChanges();
+      });
   }
 
   confirmarCita(cita: Cita): void {
-    cita.estado = 'Confirmada';
+    this.cambiarEstado(cita, 'Confirmada');
   }
 
   atenderCita(cita: Cita): void {
-    cita.estado = 'Atendida';
+    this.cambiarEstado(cita, 'Atendida');
   }
 
   cancelarCita(cita: Cita): void {
-    cita.estado = 'Cancelada';
+    this.cambiarEstado(cita, 'Cancelada');
+  }
+
+  pagarCita(cita: Cita): void {
+    this.cambiarEstado(cita, 'Pagada');
+  }
+
+  cambiarEstado(cita: Cita, estado: EstadoCita): void {
+    this.pedir<any>('actualizarEstadoCita', {
+      idCita: cita.idCita,
+      estado: estado
+    })
+      .then((respuesta) => {
+        if (!respuesta.success) {
+          alert(respuesta.message || 'No se pudo actualizar la cita.');
+          return;
+        }
+
+        cita.estado = estado;
+      })
+      .catch(() => {
+        alert('Error al actualizar la cita.');
+      })
+      .finally(() => {
+        this.cdr.detectChanges();
+      });
   }
 
   reprogramarCita(cita: Cita): void {
@@ -152,9 +271,27 @@ export class Citas {
       return;
     }
 
-    cita.fecha = nuevaFecha;
-    cita.hora = nuevaHora;
-    cita.estado = 'Pendiente';
+    this.pedir<any>('reprogramarCita', {
+      idCita: cita.idCita,
+      fecha: nuevaFecha,
+      hora: nuevaHora
+    })
+      .then((respuesta) => {
+        if (!respuesta.success) {
+          alert(respuesta.message || 'No se pudo reprogramar la cita.');
+          return;
+        }
+
+        cita.fecha = nuevaFecha;
+        cita.hora = nuevaHora;
+        cita.estado = 'Pendiente';
+      })
+      .catch(() => {
+        alert('Error al reprogramar la cita.');
+      })
+      .finally(() => {
+        this.cdr.detectChanges();
+      });
   }
 
   eliminarCita(idCita: number): void {
@@ -164,21 +301,40 @@ export class Citas {
       return;
     }
 
-    this.citas = this.citas.filter((cita) => cita.idCita !== idCita);
+    this.pedir<any>('eliminarCita', {
+      idCita: idCita
+    })
+      .then((respuesta) => {
+        if (!respuesta.success) {
+          alert(respuesta.message || 'No se pudo eliminar la cita.');
+          return;
+        }
+
+        this.citas = this.citas.filter((cita) => Number(cita.idCita) !== Number(idCita));
+      })
+      .catch(() => {
+        alert('Error al eliminar la cita.');
+      })
+      .finally(() => {
+        this.cdr.detectChanges();
+      });
   }
 
   limpiarFormulario(): void {
     this.nuevaCita = {
-      idCita: 0,
+      idHistoria: null,
+      idPaciente: null,
+      idMedico: null,
       fecha: '',
       hora: '',
-      estado: 'Pendiente',
       motivoConsulta: '',
-      obserrvaciones: ''
+      observaciones: ''
     };
+
+    this.cdr.detectChanges();
   }
 
-  contarPorEstado(estado: Cita['estado']): number {
+  contarPorEstado(estado: EstadoCita): number {
     return this.citas.filter((cita) => cita.estado === estado).length;
   }
 
@@ -195,14 +351,60 @@ export class Citas {
       return 'border-red-200 bg-red-100 text-red-700';
     }
 
+    if (estado === 'Pagada') {
+      return 'border-indigo-200 bg-indigo-100 text-indigo-700';
+    }
+
     return 'border-amber-200 bg-amber-100 text-amber-700';
   }
 
-  private generarId(): number {
-    if (this.citas.length === 0) {
-      return 1;
+  buscarHistoria(idHistoria: number): HistoriaCita | undefined {
+    return this.historias.find(
+      (historia) => Number(historia.idHistoria) === Number(idHistoria)
+    );
+  }
+
+  buscarMedico(idMedico: number): MedicoCita | undefined {
+    return this.medicos.find(
+      (medico) => Number(medico.idMedico) === Number(idMedico)
+    );
+  }
+
+  nombrePaciente(cita: Cita): string {
+    const historia = this.buscarHistoria(cita.idHistoria);
+
+    if (!historia) {
+      return 'Paciente no encontrado';
     }
 
-    return Math.max(...this.citas.map((cita) => cita.idCita)) + 1;
+    return `${historia.nombrePaciente} - DNI ${historia.dniPaciente}`;
+  }
+
+  nombreMedico(cita: Cita): string {
+    const medico = this.buscarMedico(cita.idMedico);
+
+    if (!medico) {
+      return 'Médico no encontrado';
+    }
+
+    return `${medico.nombre} - ${medico.especialidad}`;
+  }
+
+  private pedir<T>(action: string, datos: Record<string, any> = {}): Promise<T> {
+    const body = new URLSearchParams();
+
+    body.set('action', action);
+
+    Object.keys(datos).forEach((key) => {
+      body.set(key, String(datos[key] ?? ''));
+    });
+
+    return firstValueFrom(
+      this.http.post<T>(this.apiUrl, body.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
+    );
   }
 }
